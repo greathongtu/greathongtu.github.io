@@ -31,6 +31,7 @@ The Ideal:
 * use * to **search**, cw\<something\>\<Esc\> toChange**.
 * gu{motion} to make all lowercase
 * in visual mode: o: Goto other end of highlighted text.
+* in visual mode: r-: change them all to -----
 * in insert mode: \<C-o\>zz to get into insert normal mode.(move curr line to center and continue insert)
 * 18\<C-x\>: find the first number later in this line, -18 to it.
 * in insert mode: \<C-w\> delete back one word. \<C-u\> delete back to start of line
