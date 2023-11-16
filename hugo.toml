@@ -2,3 +2,6 @@ baseURL = 'https://thegreatsilly.github.io/'
 languageCode = 'en-us'
 title = 'thegreatsilly 的 Blog'
 theme = 'paper'
+
+[taxonomies]
+   tag = "tags"
