@@ -1,5 +1,5 @@
 +++
-title = 'Vim'
+title = 'Vim 进阶'
 date = 2023-11-16T14:39:47+08:00
 draft = false
 tags = ['vim', 'editor']
