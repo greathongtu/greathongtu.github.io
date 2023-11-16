@@ -4,4 +4,7 @@ title = 'thegreatsilly 的 Blog'
 theme = 'paper'
 
 [taxonomies]
-   tag = "tags"
+tag = "tags"
+
+[params]
+github = 'thegreatsilly'  

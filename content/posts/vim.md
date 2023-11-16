@@ -1,7 +1,7 @@
 +++
 title = 'Vim'
 date = 2023-11-16T14:39:47+08:00
-draft = true
+draft = false
 tags = ['vim', 'editor']
 +++
 
