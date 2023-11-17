@@ -28,7 +28,13 @@ The Ideal:
 
 
 ## Misc
+* w: word, s: sentence, p: paragraph, 一般来说，d{motion} 命令和 aw、as 和 ap 配合使用比较好，而 c{motion} 和 iw is ip一起用效果会更好
+* :!ls exec shell command inside vim, % means current file
 * use * to **search**, cw\<something\>\<Esc\> toChange**.
+* 1. modify column data: visual select then c, finally \<Esc\>
+    2. 非方形区域也行，如在行尾添加分号：选中block,go to end using $
+* :w !sudo tee % > /dev/null 以超级用户权限保存文件
+* :%s/Practical/Pragmatic/ 每行内的第一个“Practical”替换为“Pragmatic”
 * gu{motion} to make all lowercase
 * in visual mode: o: Goto other end of highlighted text.
 * in visual mode: r-: change them all to -----
