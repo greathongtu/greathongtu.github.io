@@ -95,7 +95,7 @@ t1 = std::move(t2);
 thread id : std::thread::get_id() 或者 std::this_thread::get_id()
 
 
-## Sharing Data
+## Sharing Data with mutex
 If all shared data is read-only, there’s no problem。
 
 std::mutex -> std::lock_guard -> std::scoped_lock
@@ -132,3 +132,148 @@ void swap(X &lhs, X &rhs) {
 * USE A LOCK HIERARCHY: 从上层锁到下层
 
 ### 比lock_guard更灵活的 std::unique_lock
+using std::unique_lock and std::defer_lock B, rather than std::lock_guard and std::adopt_lock. 更灵活但更耗空间，更慢。最好还是用scoped_lock。
+```cpp
+void swap(X &lhs, X &rhs) {
+  if (&lhs == &rhs)
+    return;
+  std::unique_lock<std::mutex> lock_a(lhs.m, std::defer_lock);
+  std::unique_lock<std::mutex> lock_b(rhs.m, std::defer_lock);
+  std::lock(lock_a, lock_b);
+  swap(lhs.some_detail, rhs.some_detail);
+}
+```
+
+### Transferring mutex ownership between scopes
+因为std::unique_lock不拥有mutex，mutex的ownership可以在intance之间move
+
+### Locking at an appropriate granularity
+```cpp
+void get_and_process_data() {
+  std::unique_lock<std::mutex> my_lock(the_mutex);
+  some_class data_to_process = get_next_data_chunk();
+  my_lock.unlock();
+  result_type result = process(data_to_process);
+  my_lock.lock();
+  write_result(data_to_process, result);
+}
+```
+appropriate granularity不仅指data的数量，还指锁的时长
+```cpp
+class Y {
+private:
+  int some_detail;
+  mutable std::mutex m;
+  int get_detail() const {
+    std::lock_guard<std::mutex> lock_a(m);
+    return some_detail;
+  }
+
+public:
+  Y(int sd) : some_detail(sd) {}
+  friend bool operator==(Y const &lhs, Y const &rhs) {
+    if (&lhs == &rhs)
+      return true;
+    int const lhs_value = lhs.get_detail();
+    int const rhs_value = rhs.get_detail();
+    return lhs_value == rhs_value;
+  }
+};
+```
+if you don’t hold the required locks for the entire duration of an operation, you’re exposing yourself to race conditions.上面相等只能说明lhs在某一时间跟rhs在另外一个时间是相等。
+
+## 除mutex 别的保护shared data的方法
+One common case is where the shared data needs protection only from concurrent access while it’s being initialized, but after that no explicit synchronization is required(比如data创建之后就是read only的了)
+
+### Protecting shared data during initialization
+* 单线程的时候可以Lazy initialization：看一下没创建的话再去创建。
+
+* naive加锁的多线程方法unnecessary serialization，性能太差
+
+* double checked locking 会race：
+```cpp
+void undefined_behaviour_with_double_checked_locking() {
+  if (!resource_ptr) { // read
+    std::lock_guard<std::mutex> lk(resource_mutex);
+    if (!resource_ptr) {
+      resource_ptr.reset(new some_resource); // write
+    }
+  }
+  resource_ptr->do_something();
+}
+```
+read 和 write 没有同步，会race。
+even if a thread sees the pointer written by another thread, it might not see the newly created instance of some_resource, resulting in the call to do_something() e operating on incorrect values.
+
+* std::once_flag 和 std::call_once
+```cpp
+std::shared_ptr<some_resource> resource_ptr;
+std::once_flag resource_flag;
+void init_resource() { resource_ptr.reset(new some_resource); }
+void foo() {
+  // the pointer will have been initialized by some thread (synchronizly) by the time std::call_once returns
+  // synchronization data 存在 once_flag 里
+  std::call_once(resource_flag, init_resource);
+  resource_ptr->do_something();
+}
+```
+
+除了通过function的方式，还可以被用在lazy initialization of class
+members
+```cpp
+class X {
+private:
+  connection_info connection_details;
+  connection_handle connection;
+  std::once_flag connection_init_flag;
+  void open_connection() {
+    connection = connection_manager.open(connection_details);
+  }
+
+public:
+  X(connection_info const &connection_details_)
+      : connection_details(connection_details_) {}
+  void send_data(data_packet const &data) {
+    std::call_once(connection_init_flag, &X::open_connection, this);
+    connection.send_data(data);
+  }
+  data_packet receive_data() {
+    std::call_once(connection_init_flag, &X::open_connection, this);
+    return connection.receive_data();
+  }
+};
+```
+上面的例子中 send_data() 和 receive_data() 两者中更先被call的完成init.
+
+像mutex一样，once_flag也不能被copy、move
+
+* local static variables的初始化occur the first time control passes through its declaration。多线程环境下这就会race,c++11之后的compiler就没问题了。所以可以通过这种方式替代call_once() where a single global instance is required
+
+### Protecting rarely updated data structures
+比如DNS信息：读写锁：std::shared_mutex 和 std::shared_timed_mutex.
+
+通过std::shared_lock<std::shared_mutex> 获得shared access；
+通过std::lock_guard<std::shared_mutex> 或者std::unique_lock<std::shared_mutex> 获得 exclusive access
+
+(mutable 关键词：在const 函数中也可以修改mutable变量，所以适合用在mutex上，因为mutex要lock、unlock)
+
+### Recursive locking
+重复锁同一个mutex是UB.
+
+std::recursive_mutex：可重复锁，（但要记得锁了几次最后还得解锁几次，通过RAII就行）
+
+**Most of the time, if you think you want a recursive mutex, you probably need to change your design instead.**
+
+common use: 每一个public成员函数都lock了，一个public成员函数会call 另一个.
+**But such usage is not recommended** because it can lead to sloppy thinking and bad design. The class invariants are typically broken.
+
+Better to extract a new private member function which does not lock the mutex
+
+
+# Synchronizing concurrent operations
+
+上面讲的是保护data, 这里讲同步action：condition variables 和 futures。还有latches and barriers
+* Waiting for an event
+* Waiting for one-off events with futures
+* Waiting with a time limit
+* Using the synchronization of operations to simplify code
