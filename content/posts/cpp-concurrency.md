@@ -1,7 +1,7 @@
 +++
 title = 'Cpp Concurrency'
 date = 2023-12-08T14:52:36+08:00
-draft = true
+draft = false
 +++
 
 ```cpp
@@ -424,3 +424,33 @@ auto sf = p.get_future().share();
 
 
 ## Waiting with a time limit
+
+
+
+# memory order and atomic
+memory order是线程之间进行顺序绑定用的。
+
+release sequence 指一个release 可以和后面的很多个acquire 同步
+
+如果acquire操作看见release fence后面的store的结果，那fence就和acquire同步；如果acquire fence后面的load看见release操作的结果，那release和fence同步。
+
+Release fence可以防止fence前的内存操作重排到fence后的任意store之后，即阻止loadstore重排和storestore重排。
+
+acquire fence可以防止fence后的内存操作重排到fence前的任意load之前，即阻止loadload重排和loadstore重排
+
+std::atomic_thread_fence(memory_order_acq_rel)和std::atomic_thread_fence(memory_order_seq_cst)都是full fence。
+
+基于atomic_thread_fence（外加一个任意序的原子变量操作）的同步和基于原子操作的同步很类似，比如最常用的，都可以形成release acquire语义，但是从上面的描述可以看出，fence的效果要比基于原子变量的效果更强，在weak memory order平台的开销也更大。
+
+以release为例，对于基于原子变量的release opration，仅仅是阻止前面的内存操作重排到该release opration之后，而release fence则是阻止重排到fence之后的任意store operation之后。
+
+因为fence的同步效果和原子操作上的同步效果比较相似，可以互相组合，自然的，使用fence的同步会有三种情况， fence - atomic同步，fence - fence同步和atomic-fence -同步。
+
+If a non-atomic operation is sequenced before an atomic operation, and that atomic operation happens before an operation in another thread, the non-atomic operation also happens before that operation in the other thread. 参考代码：5.3.6的 listing5.13
+所以mutex的实现的基础就是这个：lock（）是acquire，unlock是release，所以unlock之前的操作在unlock之前，也就在下一个thread的lock之前。
+
+原子变量实现自旋锁：https://blog.51cto.com/quantfabric/2581173 相比mutex，是busy waiting而不是sleep waiting，不会使线程阻塞；少了用户态内核态的切换。
+
+无锁编程性能并不一定更好，比如cache受影响。
+
+原子变量的底层实现可能会使用mutex。
