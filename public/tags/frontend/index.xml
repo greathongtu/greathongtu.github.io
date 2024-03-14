@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Frontend on greathongtu 的 Blog</title>
+    <link>http://localhost:1313/tags/frontend/</link>
+    <description>Recent content in Frontend on greathongtu 的 Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 14 Mar 2024 19:42:12 +0800</lastBuildDate>
+    <atom:link href="http://localhost:1313/tags/frontend/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>React</title>
+      <link>http://localhost:1313/posts/react/</link>
+      <pubDate>Thu, 14 Mar 2024 19:42:12 +0800</pubDate>
+      <guid>http://localhost:1313/posts/react/</guid>
+      <description> jsx：component返回的jsx，看起来像html，实际是javascript，通过babel将jsx编译成javascript，这些js最后通过dom操作生产html。jsx融合了html，css，js三个。 props：是属性，是上级component向下级component传递的只读的信息 state：使用useState()返回一个初始值v和一个function setV。useState是一个react Hook。根据当前state更新新的state需要用lambda function UI = 很多components = f(state) Npx create-react-app@5 travel-list 运行：npm start </description>
+    </item>
+  </channel>
+</rss>

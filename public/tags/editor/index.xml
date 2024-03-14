@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Editor on greathongtu 的 Blog</title>
+    <link>http://localhost:1313/tags/editor/</link>
+    <description>Recent content in Editor on greathongtu 的 Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Thu, 16 Nov 2023 14:39:47 +0800</lastBuildDate>
+    <atom:link href="http://localhost:1313/tags/editor/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Vim 进阶</title>
+      <link>http://localhost:1313/posts/vim/</link>
+      <pubDate>Thu, 16 Nov 2023 14:39:47 +0800</pubDate>
+      <guid>http://localhost:1313/posts/vim/</guid>
+      <description>Repeat using . and ; // use &amp;#39; to revert ;, u to revert . var foo = &amp;#34;method(&amp;#34;+argument1+&amp;#34;,&amp;#34;+argument2+&amp;#34;)&amp;#34;; f+ to Move, s&amp;lt;space&amp;gt;+&amp;lt;space&amp;gt;&amp;lt;Esc&amp;gt; to Change. use ; to repeat search and . to repeat change var foo = &amp;#34;method(&amp;#34; + argument1 + &amp;#34;,&amp;#34; + argument2 + &amp;#34;)&amp;#34;; Dot Formula The Ideal:&#xA;one keystroke to Move, one keystroke to Execute. Act, Repeat, Reverse Operator + Motion = Action (dw、guaw、gcap) Misc 如何在每行的最后加上分号？ 先A; 然后就可以重复j.</description>
+    </item>
+  </channel>
+</rss>

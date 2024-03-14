@@ -1,0 +1,353 @@
+<!doctype html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html
+  class="not-ready lg:text-base"
+  style="--bg: #faf8f1"
+  lang="en-us"
+>
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, shrink-to-fit=no"
+  />
+
+  
+  <title>Map Reduce 的实现 - greathongtu 的 Blog</title>
+
+  
+  <meta name="theme-color" />
+
+  
+  
+  
+  
+  <meta name="description" content="数据结构设计 状态都存在 Coordinator 中， Worker 无状态
+Task 结构 每次 Worker 向 Coordinator 请求 Task,
+type Task struct { Input string // Map 阶段的输入文件名 TaskPhase Phase // Worker眼中的阶段： Map/Reduce/Exit/Wait NReduce int // Reduce 的数量 Index int // 该 Task 在 Coordinator中的索引 Intermediates []string // Map生成的中间文件名 Output string // Reduce 生成的最终输出文件名 } Coordinator type Coordinator struct { TaskQueue chan *Task // 待处理的 Task 队列 TaskMetadatas map[int]*TaskMetadata // Coordinator 维护的 Task 元数据 Phase Phase // Coordinator 处于哪个阶段： Map/Reduce/Exit/Wait NReduce int InputFiles []string // Map 阶段的输入文件名 Intermediates [][]string mutex sync." />
+  <meta name="author" content="greathongtu 的 Blog" />
+  
+
+  
+  
+  
+  
+  
+  
+  <link rel="preload stylesheet" as="style" href="http://localhost:1313/main.min.css" />
+
+  
+  
+  
+  
+  
+  <link rel="preload" as="image" href="http://localhost:1313/theme.png" />
+
+  
+  
+  
+  
+  
+
+  
+  
+  <link rel="preload" as="image" href="http://localhost:1313/github.svg" />
+  
+  
+
+  
+  
+  <script
+    defer
+    src="http://localhost:1313/highlight.min.js"
+    onload="hljs.initHighlightingOnLoad();"
+  ></script>
+  
+
+  
+  
+  
+
+  
+  <link rel="icon" href="http://localhost:1313/favicon.ico" />
+  <link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png" />
+
+  
+  <meta name="generator" content="Hugo 0.123.8">
+
+  
+  
+  
+</head>
+
+  <body class="text-black duration-200 ease-out dark:text-white">
+    <header class="mx-auto flex h-[4.5rem] max-w-3xl px-8 lg:justify-center">
+  <div class="relative z-50 mr-auto flex items-center">
+    <a
+      class="-translate-x-[1px] -translate-y-[1px] text-2xl font-semibold"
+      href="http://localhost:1313/"
+      >greathongtu 的 Blog</a
+    >
+    <div
+      class="btn-dark text-[0] ml-4 h-6 w-6 shrink-0 cursor-pointer [background:url(./theme.png)_left_center/_auto_theme('spacing.6')_no-repeat] [transition:_background-position_0.4s_steps(5)] dark:[background-position:right]"
+      role="button"
+      aria-label="Dark"
+    ></div>
+  </div>
+
+  <div
+    class="btn-menu relative z-50 -mr-8 flex h-[4.5rem] w-[5rem] shrink-0 cursor-pointer flex-col items-center justify-center gap-2.5 lg:hidden"
+    role="button"
+    aria-label="Menu"
+  ></div>
+
+  
+
+  <script>
+    
+    const htmlClass = document.documentElement.classList;
+    setTimeout(() => {
+      htmlClass.remove('not-ready');
+    }, 10);
+
+    
+    const btnMenu = document.querySelector('.btn-menu');
+    btnMenu.addEventListener('click', () => {
+      htmlClass.toggle('open');
+    });
+
+    
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    const lightBg = '#faf8f1'.replace(/"/g, '');
+    const setDark = (isDark) => {
+      metaTheme.setAttribute('content', isDark ? '#000' : lightBg);
+      htmlClass[isDark ? 'add' : 'remove']('dark');
+      localStorage.setItem('dark', isDark);
+    };
+
+    
+    const darkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+    if (htmlClass.contains('dark')) {
+      setDark(true);
+    } else {
+      const darkVal = localStorage.getItem('dark');
+      setDark(darkVal ? darkVal === 'true' : darkScheme.matches);
+    }
+
+    
+    darkScheme.addEventListener('change', (event) => {
+      setDark(event.matches);
+    });
+
+    
+    const btnDark = document.querySelector('.btn-dark');
+    btnDark.addEventListener('click', () => {
+      setDark(localStorage.getItem('dark') !== 'true');
+    });
+  </script>
+
+  <div
+    class="nav-wrapper fixed inset-x-0 top-full z-40 flex h-full select-none flex-col justify-center pb-16 duration-200 dark:bg-black lg:static lg:h-auto lg:flex-row lg:!bg-transparent lg:pb-0 lg:transition-none"
+  >
+    
+    
+
+    
+    <nav
+      class="mt-12 flex justify-center space-x-10 dark:invert lg:ml-12 lg:mt-0 lg:items-center lg:space-x-6"
+    >
+      
+      <a
+        class="h-8 w-8 text-[0] [background:var(--url)_center_center/cover_no-repeat] lg:h-6 lg:w-6"
+        style="--url: url(./github.svg)"
+        href="https://github.com/greathongtu"
+        target="_blank"
+        rel="me"
+      >
+        github
+      </a>
+      
+    </nav>
+    
+  </div>
+</header>
+
+
+    <main
+      class="prose prose-neutral relative mx-auto min-h-[calc(100%-9rem)] max-w-3xl px-8 pb-16 pt-12 dark:prose-invert"
+    >
+      
+
+<article>
+  <header class="mb-16">
+    <h1 class="!my-0 pb-2.5">Map Reduce 的实现</h1>
+
+    
+    <div class="text-sm antialiased opacity-60">
+      
+      <time>Dec 1, 2023</time>
+      
+      
+      
+      
+    </div>
+    
+  </header>
+
+  <section><h2 id="数据结构设计">数据结构设计</h2>
+<p>状态都存在 Coordinator 中， Worker 无状态</p>
+<h3 id="task-结构">Task 结构</h3>
+<p>每次 Worker 向 Coordinator 请求 Task,</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Task</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">Input</span>         <span style="color:#66d9ef">string</span> <span style="color:#75715e">// Map 阶段的输入文件名
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">TaskPhase</span>     <span style="color:#a6e22e">Phase</span> <span style="color:#75715e">// Worker眼中的阶段： Map/Reduce/Exit/Wait
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">NReduce</span>       <span style="color:#66d9ef">int</span>   <span style="color:#75715e">// Reduce 的数量
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">Index</span>         <span style="color:#66d9ef">int</span>   <span style="color:#75715e">// 该 Task 在 Coordinator中的索引
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">Intermediates</span> []<span style="color:#66d9ef">string</span>  <span style="color:#75715e">// Map生成的中间文件名
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">Output</span>        <span style="color:#66d9ef">string</span> <span style="color:#75715e">// Reduce 生成的最终输出文件名
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span></code></pre></div><h3 id="coordinator">Coordinator</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Coordinator</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">TaskQueue</span>     <span style="color:#66d9ef">chan</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Task</span> <span style="color:#75715e">// 待处理的 Task 队列
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">TaskMetadatas</span> <span style="color:#66d9ef">map</span>[<span style="color:#66d9ef">int</span>]<span style="color:#f92672">*</span><span style="color:#a6e22e">TaskMetadata</span> <span style="color:#75715e">// Coordinator 维护的 Task 元数据
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">Phase</span>         <span style="color:#a6e22e">Phase</span> <span style="color:#75715e">// Coordinator 处于哪个阶段： Map/Reduce/Exit/Wait
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">NReduce</span>       <span style="color:#66d9ef">int</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">InputFiles</span>    []<span style="color:#66d9ef">string</span>  <span style="color:#75715e">// Map 阶段的输入文件名
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">Intermediates</span> [][]<span style="color:#66d9ef">string</span> 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">mutex</span> <span style="color:#a6e22e">sync</span>.<span style="color:#a6e22e">Mutex</span> <span style="color:#75715e">// 用于保护并发安全
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">TaskMetadata</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">TaskStatus</span> <span style="color:#a6e22e">TaskStatus</span> 	<span style="color:#75715e">// Coordinator 关心的 task状态 Unassigned/Working/Finished
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">StartTime</span>  <span style="color:#a6e22e">time</span>.<span style="color:#a6e22e">Time</span>    <span style="color:#75715e">// 用于防止 Worker 超时
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">Task</span>       <span style="color:#f92672">*</span><span style="color:#a6e22e">Task</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="mapreduce-的执行流程">MapReduce 的执行流程</h2>
+<ol>
+<li>Coordinator 启动，并初始化，监听 Worker 的RPC请求。同时要启动一个goroutine 检查超时的任务，超时的任务要重新插入人物队列。
+<ul>
+<li>两种RPC, 一个是Worker请求任务的RPC, 还有一个是Worker完成任务的通知的RPC</li>
+</ul>
+</li>
+<li>Worker 启动，向 Coordinator 请求任务，根据返回的 task 的 Phase (Map/Reduce/Exit/Wait) 分别进行下一步操作
+<ul>
+<li>Map 阶段：读取输入文件，调用用户提供的 Map 函数，生成中间文件，然后向 Coordinator 通知任务完成</li>
+<li>Reduce 阶段：读取中间文件，调用用户提供的 Reduce 函数，生成最终输出文件，然后向 Coordinator 通知任务完成</li>
+<li>Exit 阶段：直接 return</li>
+<li>Wait 阶段：sleep 5 s</li>
+</ul>
+</li>
+<li>Coordinator 每次收到 Worker 完成任务的通知，除了进行状态的更新，都会检查是否所有任务都已经完成，如果是，就进入下一个阶段</li>
+<li>最终 Coordinator 到达 Exit Phase, 退出</li>
+</ol>
+</section>
+
+  
+  
+  <footer class="mt-12 flex flex-wrap">
+     
+    <a
+      class="mb-1.5 mr-1.5 rounded-lg bg-black/[3%] px-5 py-1.5 no-underline dark:bg-white/[8%]"
+      href="http://localhost:1313/tags/distributed-system"
+      >Distributed System</a
+    >
+     
+    <a
+      class="mb-1.5 mr-1.5 rounded-lg bg-black/[3%] px-5 py-1.5 no-underline dark:bg-white/[8%]"
+      href="http://localhost:1313/tags/map-reduce"
+      >Map Reduce</a
+    >
+    
+  </footer>
+  
+
+  
+  
+  
+  
+  <nav class="mt-24 flex rounded-lg bg-black/[3%] text-lg dark:bg-white/[8%]">
+    
+    <a
+      class="flex w-1/2 items-center rounded-l-md p-6 pr-3 font-semibold no-underline hover:bg-black/[2%] dark:hover:bg-white/[3%]"
+      href="http://localhost:1313/posts/cpp-concurrency/"
+      ><span class="mr-1.5">←</span><span>Cpp Concurrency</span></a
+    >
+    
+    
+    <a
+      class="ml-auto flex w-1/2 items-center justify-end rounded-r-md p-6 pl-3 font-semibold no-underline hover:bg-black/[2%] dark:hover:bg-white/[3%]"
+      href="http://localhost:1313/posts/go-design/"
+      ><span>Go 探究</span><span class="ml-1.5">→</span></a
+    >
+    
+  </nav>
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+</article>
+
+
+    </main>
+
+    <footer
+  class="opaco mx-auto flex h-[4.5rem] max-w-3xl items-center px-8 text-[0.9em] opacity-60"
+>
+  <div class="mr-auto">
+    &copy; 2024
+    <a class="link" href="http://localhost:1313/">greathongtu 的 Blog</a>
+  </div>
+  <a class="link mx-6" href="https://gohugo.io/" rel="noopener" target="_blank"
+    >Powered by Hugo️️</a
+  >️
+  <a
+    class="link"
+    href="https://github.com/nanxiaobei/hugo-paper"
+    rel="noopener"
+    target="_blank"
+    >✎ Paper</a
+  >
+</footer>
+
+  </body>
+</html>

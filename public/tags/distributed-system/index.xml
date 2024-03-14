@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Distributed System on greathongtu 的 Blog</title>
+    <link>http://localhost:1313/tags/distributed-system/</link>
+    <description>Recent content in Distributed System on greathongtu 的 Blog</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <lastBuildDate>Fri, 01 Dec 2023 20:24:26 +0800</lastBuildDate>
+    <atom:link href="http://localhost:1313/tags/distributed-system/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Map Reduce 的实现</title>
+      <link>http://localhost:1313/posts/map-reduce/</link>
+      <pubDate>Fri, 01 Dec 2023 20:24:26 +0800</pubDate>
+      <guid>http://localhost:1313/posts/map-reduce/</guid>
+      <description>数据结构设计 状态都存在 Coordinator 中， Worker 无状态&#xA;Task 结构 每次 Worker 向 Coordinator 请求 Task,&#xA;type Task struct { Input string // Map 阶段的输入文件名 TaskPhase Phase // Worker眼中的阶段： Map/Reduce/Exit/Wait NReduce int // Reduce 的数量 Index int // 该 Task 在 Coordinator中的索引 Intermediates []string // Map生成的中间文件名 Output string // Reduce 生成的最终输出文件名 } Coordinator type Coordinator struct { TaskQueue chan *Task // 待处理的 Task 队列 TaskMetadatas map[int]*TaskMetadata // Coordinator 维护的 Task 元数据 Phase Phase // Coordinator 处于哪个阶段： Map/Reduce/Exit/Wait NReduce int InputFiles []string // Map 阶段的输入文件名 Intermediates [][]string mutex sync.</description>
+    </item>
+  </channel>
+</rss>

@@ -1,0 +1,461 @@
+<!doctype html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html
+  class="not-ready lg:text-base"
+  style="--bg: #faf8f1"
+  lang="en-us"
+>
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, shrink-to-fit=no"
+  />
+
+  
+  <title>sql 总结 - greathongtu 的 Blog</title>
+
+  
+  <meta name="theme-color" />
+
+  
+  
+  
+  
+  <meta name="description" content="mysql 执行流程 SQL语句 - 查询缓存 - 解析器（语法分析 语意分析） - 优化器（逻辑优化 物理优化） - 执行器
+为什么说 B&#43; 树查找行记录，最多只需1~3次磁盘IO InnoDB 中页大小为16KB，一个键值对大概 8B&#43;8B， 也就是一个页可以存1K个 KV pair，1K约等于1000个。 所以深度为3的 b&#43; 树索引可以维护 10^3 * 10^3 * 10^3 = 10 亿条记录。 正常每个节点不可能都填满了，所以一般 b&#43; 树高度在2到4 层。根节点在内存内，所以一般查找某一 KV 的行记录时只需1到3次磁盘IO
+InnoDB 关键特性 Insert Buffer 升级为 Change Buffer 对于非聚集索引的插入或更新操作，不是每次直接插入到索引页，而是先判断插入的非聚集索引页是否在缓冲池中，若在则直接插入；若不在，则先放入一个 Insert Buffer 对象中，然后再以一定的频率和情况进行 Insert Buffer 和辅助索引页子节点的 merge 操作。如此一来多个插入合并到一个操作中（因为在一个索引页中）。 条件： 1. 索引是辅助索引； 2. 索引不是唯一的。 Insert Buffer 是一个 B&#43; 树 Double Write Adaptive Hash Index Async IO Flush Neighbor Page 覆盖索引 覆盖索引（covering index ，或称为索引覆盖）即从非主键索引中就能查到的记录，而不需要查询主键索引中的记录，避免了回表的产生减少了树的搜索次数，显著提升性能" />
+  <meta name="author" content="greathongtu 的 Blog" />
+  
+
+  
+  
+  
+  
+  
+  
+  <link rel="preload stylesheet" as="style" href="http://localhost:1313/main.min.css" />
+
+  
+  
+  
+  
+  
+  <link rel="preload" as="image" href="http://localhost:1313/theme.png" />
+
+  
+  
+  
+  
+  
+
+  
+  
+  <link rel="preload" as="image" href="http://localhost:1313/github.svg" />
+  
+  
+
+  
+  
+  <script
+    defer
+    src="http://localhost:1313/highlight.min.js"
+    onload="hljs.initHighlightingOnLoad();"
+  ></script>
+  
+
+  
+  
+  
+
+  
+  <link rel="icon" href="http://localhost:1313/favicon.ico" />
+  <link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png" />
+
+  
+  <meta name="generator" content="Hugo 0.123.8">
+
+  
+  
+  
+</head>
+
+  <body class="text-black duration-200 ease-out dark:text-white">
+    <header class="mx-auto flex h-[4.5rem] max-w-3xl px-8 lg:justify-center">
+  <div class="relative z-50 mr-auto flex items-center">
+    <a
+      class="-translate-x-[1px] -translate-y-[1px] text-2xl font-semibold"
+      href="http://localhost:1313/"
+      >greathongtu 的 Blog</a
+    >
+    <div
+      class="btn-dark text-[0] ml-4 h-6 w-6 shrink-0 cursor-pointer [background:url(./theme.png)_left_center/_auto_theme('spacing.6')_no-repeat] [transition:_background-position_0.4s_steps(5)] dark:[background-position:right]"
+      role="button"
+      aria-label="Dark"
+    ></div>
+  </div>
+
+  <div
+    class="btn-menu relative z-50 -mr-8 flex h-[4.5rem] w-[5rem] shrink-0 cursor-pointer flex-col items-center justify-center gap-2.5 lg:hidden"
+    role="button"
+    aria-label="Menu"
+  ></div>
+
+  
+
+  <script>
+    
+    const htmlClass = document.documentElement.classList;
+    setTimeout(() => {
+      htmlClass.remove('not-ready');
+    }, 10);
+
+    
+    const btnMenu = document.querySelector('.btn-menu');
+    btnMenu.addEventListener('click', () => {
+      htmlClass.toggle('open');
+    });
+
+    
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    const lightBg = '#faf8f1'.replace(/"/g, '');
+    const setDark = (isDark) => {
+      metaTheme.setAttribute('content', isDark ? '#000' : lightBg);
+      htmlClass[isDark ? 'add' : 'remove']('dark');
+      localStorage.setItem('dark', isDark);
+    };
+
+    
+    const darkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+    if (htmlClass.contains('dark')) {
+      setDark(true);
+    } else {
+      const darkVal = localStorage.getItem('dark');
+      setDark(darkVal ? darkVal === 'true' : darkScheme.matches);
+    }
+
+    
+    darkScheme.addEventListener('change', (event) => {
+      setDark(event.matches);
+    });
+
+    
+    const btnDark = document.querySelector('.btn-dark');
+    btnDark.addEventListener('click', () => {
+      setDark(localStorage.getItem('dark') !== 'true');
+    });
+  </script>
+
+  <div
+    class="nav-wrapper fixed inset-x-0 top-full z-40 flex h-full select-none flex-col justify-center pb-16 duration-200 dark:bg-black lg:static lg:h-auto lg:flex-row lg:!bg-transparent lg:pb-0 lg:transition-none"
+  >
+    
+    
+
+    
+    <nav
+      class="mt-12 flex justify-center space-x-10 dark:invert lg:ml-12 lg:mt-0 lg:items-center lg:space-x-6"
+    >
+      
+      <a
+        class="h-8 w-8 text-[0] [background:var(--url)_center_center/cover_no-repeat] lg:h-6 lg:w-6"
+        style="--url: url(./github.svg)"
+        href="https://github.com/greathongtu"
+        target="_blank"
+        rel="me"
+      >
+        github
+      </a>
+      
+    </nav>
+    
+  </div>
+</header>
+
+
+    <main
+      class="prose prose-neutral relative mx-auto min-h-[calc(100%-9rem)] max-w-3xl px-8 pb-16 pt-12 dark:prose-invert"
+    >
+      
+
+<article>
+  <header class="mb-16">
+    <h1 class="!my-0 pb-2.5">sql 总结</h1>
+
+    
+    <div class="text-sm antialiased opacity-60">
+      
+      <time>Nov 17, 2023</time>
+      
+      
+      
+      
+    </div>
+    
+  </header>
+
+  <section><h2 id="mysql-执行流程">mysql 执行流程</h2>
+<p>SQL语句 - 查询缓存 - 解析器（语法分析 语意分析） - 优化器（逻辑优化 物理优化） - 执行器</p>
+<h2 id="为什么说-b-树查找行记录最多只需13次磁盘io">为什么说 B+ 树查找行记录，最多只需1~3次磁盘IO</h2>
+<p>InnoDB 中页大小为16KB，一个键值对大概 8B+8B， 也就是一个页可以存1K个 KV pair，1K约等于1000个。 所以深度为3的 b+ 树索引可以维护 10^3 * 10^3 * 10^3 = 10 亿条记录。 正常每个节点不可能都填满了，所以一般 b+ 树高度在2到4 层。根节点在内存内，所以一般查找某一 KV 的行记录时只需1到3次磁盘IO</p>
+<h2 id="innodb-关键特性">InnoDB 关键特性</h2>
+<ul>
+<li>Insert Buffer 升级为 Change Buffer
+对于非聚集索引的插入或更新操作，不是每次直接插入到索引页，而是先判断插入的非聚集索引页是否在缓冲池中，若在则直接插入；若不在，则先放入一个 <code>Insert Buffer</code> 对象中，然后再以一定的频率和情况进行 Insert Buffer 和辅助索引页子节点的 merge 操作。如此一来多个插入合并到一个操作中（因为在一个索引页中）。
+条件： 1. 索引是辅助索引； 2. 索引不是唯一的。
+Insert Buffer 是一个 B+ 树</li>
+<li>Double Write</li>
+<li>Adaptive Hash Index</li>
+<li>Async IO</li>
+<li>Flush Neighbor Page</li>
+</ul>
+<h2 id="覆盖索引">覆盖索引</h2>
+<p>覆盖索引（covering index ，或称为索引覆盖）即从非主键索引中就能查到的记录，而不需要查询主键索引中的记录，避免了回表的产生减少了树的搜索次数，显著提升性能</p>
+<h2 id="索引下推">索引下推</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#f92672">#</span> <span style="color:#960050;background-color:#1e0010">根据</span> key1 <span style="color:#960050;background-color:#1e0010">的索引先找大于</span> z <span style="color:#960050;background-color:#1e0010">的，然后再判断</span>a结尾<span style="color:#960050;background-color:#1e0010">，之后才回表</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">select</span> <span style="color:#f92672">*</span> <span style="color:#66d9ef">from</span> s1 <span style="color:#66d9ef">where</span> key1 <span style="color:#f92672">&gt;</span> <span style="color:#e6db74">&#39;z&#39;</span> <span style="color:#66d9ef">AND</span> key1 <span style="color:#66d9ef">like</span> <span style="color:#e6db74">&#39;$a&#39;</span>
+</span></span></code></pre></div><h2 id="exists-和-in-的区别">EXISTS 和 IN 的区别</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#f92672">#</span> <span style="color:#66d9ef">EXISTS</span> <span style="color:#960050;background-color:#1e0010">的实现相当于外表循环：</span> A <span style="color:#960050;background-color:#1e0010">表小用</span> <span style="color:#66d9ef">exists</span><span style="color:#960050;background-color:#1e0010">，</span> B表小用IN
+</span></span><span style="display:flex;"><span><span style="color:#f92672">#</span> <span style="color:#66d9ef">EXISTS</span> <span style="color:#960050;background-color:#1e0010">先查外表；</span> <span style="color:#66d9ef">IN</span> <span style="color:#960050;background-color:#1e0010">先查内表</span>
+</span></span><span style="display:flex;"><span><span style="color:#f92672">#</span> <span style="color:#66d9ef">not</span> <span style="color:#66d9ef">in</span> <span style="color:#960050;background-color:#1e0010">和</span><span style="color:#66d9ef">not</span> <span style="color:#66d9ef">exists</span><span style="color:#960050;background-color:#1e0010">：如果查询语句使用了</span><span style="color:#66d9ef">not</span> <span style="color:#66d9ef">in</span><span style="color:#960050;background-color:#1e0010">，那么内外表都进行全表扫描，没有用到索引；而</span><span style="color:#66d9ef">not</span> extsts的子查询依然能用到表上的索引<span style="color:#960050;background-color:#1e0010">。所以无论那个表大，用</span><span style="color:#66d9ef">not</span> exists都比not in要快<span style="color:#960050;background-color:#1e0010">。</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">select</span> <span style="color:#f92672">*</span> <span style="color:#66d9ef">from</span> A <span style="color:#66d9ef">where</span> cc <span style="color:#66d9ef">IN</span> (<span style="color:#66d9ef">SELECT</span> cc <span style="color:#66d9ef">from</span> B)
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">select</span> <span style="color:#f92672">*</span> <span style="color:#66d9ef">from</span> A <span style="color:#66d9ef">where</span> <span style="color:#66d9ef">EXISTS</span> (<span style="color:#66d9ef">select</span> cc <span style="color:#66d9ef">from</span> B <span style="color:#66d9ef">where</span> B.cc <span style="color:#f92672">=</span>A.cc)
+</span></span></code></pre></div><h2 id="范式">范式</h2>
+<p>1NF: 每个属性要是原子性的
+2NF：每一条数据记录都是唯一可标识的。所有非主键字段必须完全依赖主键
+3NF：所有非主键字段不能依赖于其他非主键字段
+反范式：有些冗余是必要的。业务优先
+巴斯范式：更强的3NF</p>
+<h2 id="er模型">ER模型</h2>
+<p>entity（矩形）-relationship（菱形）
+属性（椭圆形）</p>
+<p>一个实体转换成一个数据表，属性转换成表的字段。</p>
+<p>使用主键和外键越多越好：证明实体之间冗余度低</p>
+<h2 id="调优的维度和步骤">调优的维度和步骤</h2>
+<ol>
+<li>选择合适的DBMS</li>
+<li>优化表设计</li>
+<li>优化逻辑查询</li>
+<li>优化物理查询（索引的创建和使用）</li>
+<li>使用Redis 作为缓存</li>
+<li>库级优化（读写分离，数据分片）</li>
+</ol>
+<h2 id="acid">ACID</h2>
+<ul>
+<li>atomic：一个事务要么commit 要么rollback</li>
+<li>consistency：数据从一个<code>合法性状态</code>到另一个<code>合法性状态</code>。语义上的一致性</li>
+<li>isolation：一个事务内部的操作和并发的其他事务是隔离的</li>
+<li>durability：事务提交后改变是永久的。通过事务日志保证的。包括<code>重做日志redo log</code>和<code>回滚日志undo log</code></li>
+</ul>
+<p>数据并发问题：</p>
+<ul>
+<li>脏写：不可接受</li>
+<li>脏读：Session A读了 Session B更新但没commit 的字段</li>
+<li>不可重复读：Session A读了 Session B更新且commit 的字段</li>
+<li>幻读：A读了一个字段，B又插入了一些新的行；这时候A读会发现多处几行</li>
+</ul>
+<p>隔离级别</p>
+<ul>
+<li>read uncommited 有脏读问题</li>
+<li>read commited 有不可重复读问题</li>
+<li>repeatable read 有幻读问题</li>
+<li>serializable 并行太低</li>
+</ul>
+<h2 id="mysql-事务日志">MySQL 事务日志</h2>
+<ul>
+<li>
+<p>redo log：存储引擎层生成的日志，记录的是<code>物理级别</code>上的页修改日志，主要为了保证数据的可靠性。事务commit 的时候将redo log buffer 刷新到 redo log file</p>
+</li>
+<li>
+<p>undo log：存储引擎层生成的日志，记录的是<code>逻辑操作</code>日志。如Insert语句在undo log里要记录一条对应的Delete 操作。主要用于事务的<code>回滚</code>和<code>一致性非锁定读</code>(undo log 回滚行记录到某种特定的版本——<code>MVCC</code>)</p>
+</li>
+<li>
+<p>为什么需要redo log：缓冲池的设计是为了协调 CPU 速度与磁盘速度的鸿沟。若每次一个页发生变化，就将新页的版本刷新到磁盘，开销太大。且若刷新时发生宕机，数据就无法恢复了。所以引入 <code>Write Ahead Log</code> 策略：事务提交时，先写redo log，再修改页。这是 ACID 中 Durability 的要求。</p>
+</li>
+</ul>
+<p>Checkpoint：
+1. 缩短数据库恢复时间。
+2. 缓冲池不够用时，脏页刷新到磁盘
+3. redolog 不可用时，刷新脏页</p>
+<ul>
+<li>
+<p>redo log 和 bin log 区别：redo log是存储引擎层生成的；bin log 是数据库层产生的，只有事务提交时才会一次写入到bin log中，而redo log 会一直记录</p>
+</li>
+<li>
+<p>undo log 作用：1. 回滚数据 2.MVCC</p>
+</li>
+<li>
+<p>undo log类型</p>
+<ol>
+<li>insert undo log：事务隔离性的要求导致commit之后可以直接删除undo log</li>
+<li>update undo log：可能需要提供MVCC机制，不能立刻删除。undo log 在事务 commit 之后，为了重用，放到链表中。purge线程判断是否删除 undo log 及 undo log 所在的页</li>
+</ol>
+</li>
+</ul>
+<h2 id="并发问题的解决方法">并发问题的解决方法</h2>
+<ul>
+<li>方案一：读用MVCC， 写用加锁
+<ul>
+<li>在 read committed 隔离级别下，每次select 都生成一个 ReadView</li>
+<li>在 repeatable read 隔离级别下，第一次select 时生成一个 ReadView，后续复用这个ReadView</li>
+</ul>
+</li>
+<li>方案二：读写都用锁（S lock，X lock）</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-sql" data-lang="sql"><span style="display:flex;"><span><span style="color:#66d9ef">SELECT</span> ... <span style="color:#66d9ef">LOCK</span> <span style="color:#66d9ef">IN</span> SHARED <span style="color:#66d9ef">MODE</span>;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">SELECT</span> ... <span style="color:#66d9ef">FOR</span> <span style="color:#66d9ef">SHARE</span>; <span style="color:#f92672">#</span> S <span style="color:#66d9ef">lock</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">SELECT</span> ... <span style="color:#66d9ef">FOR</span> <span style="color:#66d9ef">UPDATE</span>; <span style="color:#f92672">#</span> X <span style="color:#66d9ef">lock</span>
+</span></span></code></pre></div><h2 id="表锁的分类">表锁的分类</h2>
+<ul>
+<li>S lock &amp; X lock</li>
+<li>意向锁（intention lock）：给某一行加上排他锁，DB会给更大一级的空间加上意向锁，告诉其他人这个数据页或数据表上有人上过排他锁了</li>
+<li>自增锁（auto-inc lock）：向使用含有AUTO_INCREMENT列的表中插入数据时需要获取的一种特殊的表级锁</li>
+<li>元数据锁（MDL lock）：当对表结构变更的时候要加MDL写锁，crud加MDL读锁</li>
+</ul>
+<h2 id="行锁的分类">行锁的分类</h2>
+<ul>
+<li>记录锁（record lock）</li>
+<li>间隙锁（Gap lock）：MySQL在repeatable read级别下解决幻读问题方法1：MVCC， 2.加锁。加锁的时候无法给尚不存在的幻影记录加锁。gap lock就是为了解决这个问题</li>
+<li>临键锁（Next—Key lock）：前两种锁的结合：即锁住某条记录，又阻止其他事务在该记录前边的间隙插入新记录。在repeatable read 级别下使用</li>
+<li>插入意向锁（Insert Intention Locks）：一个事务在插入记录时要判断插入位置是否有gap锁（包括next-key lock），有的话要等待，同时生成一个插入意向锁表示有事务想插入</li>
+</ul>
+<h2 id="页锁">页锁</h2>
+<ul>
+<li>悲观锁 乐观锁</li>
+<li>显示锁 隐式锁</li>
+</ul>
+<h2 id="处理死锁">处理死锁</h2>
+<ol>
+<li>等待直到超时</li>
+<li>死锁检测进行死锁处理</li>
+</ol>
+<h2 id="mvcc">MVCC</h2>
+<p>实现依赖于 <code>隐藏字段（trx_id, roll_pointer)</code> <code>Undo Log</code> <code>Read View</code>
+是一种快照读，前提是隔离级别不是串行级别。read uncommitted也不需要MVCC。
+ReadView 主要4个重要内容： creator_trx_id, trx_ids(当前活跃的读写事务), up_limit_id(活跃事务中最小的事务ID), low_limit_id(生成ReadView 时系统应该分配给下一个事务的ID)。</p>
+<p>ReadView 判断记录的哪个版本可见：靠对比被访问版本的 trx_id 与 ReadView 中的 <code>creator_trx_id</code> <code>up_limit_id</code> <code>low_limit_id</code> <code>trx_ids</code></p>
+<p>ReadView 整体操作流程：</p>
+<ol>
+<li>首先获取事务自己的版本号，也就是事务ID</li>
+<li>获取 ReadView</li>
+<li>查询获得的数据，与 ReadView 中的事务版本号相比</li>
+<li>如果不符合 ReadView 规则，就要从 Undo Log 获取历史快照</li>
+<li>返回符合规则的结果</li>
+</ol>
+<ul>
+<li>在 read committed 隔离级别下，每次select 都生成一个 ReadView</li>
+<li>在 repeatable read 隔离级别下，第一次select 时生成一个</li>
+</ul>
+<h2 id="日志类型">日志类型</h2>
+<ul>
+<li>慢查询日志</li>
+<li>通用查询日志</li>
+<li>错误日志</li>
+<li>二进制日志（记录所有更改数据的语句（ddl，dml，没有查询的），用于主从服务器数据同步；服务器故障恢复，相比redo log，binlog是逻辑日志，redolog是物理日志）</li>
+<li>中继日志（relay log：用于主从服务器架构，从服务器用来存放主服务器bin log的一个中间文件）</li>
+<li>数据定义语句日志</li>
+</ul>
+</section>
+
+  
+  
+  <footer class="mt-12 flex flex-wrap">
+     
+    <a
+      class="mb-1.5 mr-1.5 rounded-lg bg-black/[3%] px-5 py-1.5 no-underline dark:bg-white/[8%]"
+      href="http://localhost:1313/tags/sql"
+      >sql</a
+    >
+    
+  </footer>
+  
+
+  
+  
+  
+  
+  <nav class="mt-24 flex rounded-lg bg-black/[3%] text-lg dark:bg-white/[8%]">
+    
+    <a
+      class="flex w-1/2 items-center rounded-l-md p-6 pr-3 font-semibold no-underline hover:bg-black/[2%] dark:hover:bg-white/[3%]"
+      href="http://localhost:1313/posts/go-design/"
+      ><span class="mr-1.5">←</span><span>Go 探究</span></a
+    >
+    
+    
+    <a
+      class="ml-auto flex w-1/2 items-center justify-end rounded-r-md p-6 pl-3 font-semibold no-underline hover:bg-black/[2%] dark:hover:bg-white/[3%]"
+      href="http://localhost:1313/posts/linux-io/"
+      ><span>Linux 网络I/O复用并发模型</span><span class="ml-1.5">→</span></a
+    >
+    
+  </nav>
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+</article>
+
+
+    </main>
+
+    <footer
+  class="opaco mx-auto flex h-[4.5rem] max-w-3xl items-center px-8 text-[0.9em] opacity-60"
+>
+  <div class="mr-auto">
+    &copy; 2024
+    <a class="link" href="http://localhost:1313/">greathongtu 的 Blog</a>
+  </div>
+  <a class="link mx-6" href="https://gohugo.io/" rel="noopener" target="_blank"
+    >Powered by Hugo️️</a
+  >️
+  <a
+    class="link"
+    href="https://github.com/nanxiaobei/hugo-paper"
+    rel="noopener"
+    target="_blank"
+    >✎ Paper</a
+  >
+</footer>
+
+  </body>
+</html>

@@ -1,0 +1,575 @@
+<!doctype html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html
+  class="not-ready lg:text-base"
+  style="--bg: #faf8f1"
+  lang="en-us"
+>
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, shrink-to-fit=no"
+  />
+
+  
+  <title>Go 探究 - greathongtu 的 Blog</title>
+
+  
+  <meta name="theme-color" />
+
+  
+  
+  
+  
+  <meta name="description" content="数组 如果数组中元素的个数小于或者等于 4 个，那么所有的变量会直接在栈上初始化，如果数组元素大于 4 个，变量就会在静态存储区初始化然后拷贝到栈上。 为什么？
+slice []int []interface{} 切片提供了对数组中部分连续片段的引用，而作为数组的引用，我们可以在运行区间可以修改它的长度和范围。当切片底层的数组长度不足时就会触发扩容，切片指向的数组可能会发生变化，不过在上层看来切片是没有变化的，上层只需要与切片打交道不需要关心数组的变化。
+追加和扩容 先确定切片大致容量 如果期望容量大于当前容量的两倍就会使用期望容量； 如果当前切片的长度小于 1024 就会将容量翻倍； 如果当前切片的长度大于 1024 就会每次增加 25% 的容量，直到新容量大于期望容量； 再根据切片中的元素大小对齐内存 切片拷贝 无论是编译期间拷贝还是运行时拷贝，两种拷贝方式都会通过 runtime.memmove 将整块内存的内容拷贝到目标的内存区域中： 大切片扩容或者复制时可能会发生大规模的内存拷贝，要注意。
+map type hmap struct { count int flags uint8 B uint8 noverflow uint16 hash0 uint32 buckets unsafe.Pointer oldbuckets unsafe.Pointer nevacuate uintptr extra *mapextra } type mapextra struct { overflow *[]*bmap oldoverflow *[]*bmap nextOverflow *bmap } count 表示当前哈希表中的元素数量； B 表示当前哈希表持有的 buckets 数量，但是因为哈希表中桶的数量都 2 的倍数，所以该字段会存储对数，也就是 len(buckets) == 2^B； hash0 是哈希的种子，它能为哈希函数的结果引入随机性，这个值在创建哈希表时确定，并在调用哈希函数时作为参数传入； oldbuckets 是哈希在扩容时用于保存之前 buckets 的字段，它的大小是当前 buckets 的一半； 如上图所示哈希表 runtime." />
+  <meta name="author" content="greathongtu 的 Blog" />
+  
+
+  
+  
+  
+  
+  
+  
+  <link rel="preload stylesheet" as="style" href="http://localhost:1313/main.min.css" />
+
+  
+  
+  
+  
+  
+  <link rel="preload" as="image" href="http://localhost:1313/theme.png" />
+
+  
+  
+  
+  
+  
+
+  
+  
+  <link rel="preload" as="image" href="http://localhost:1313/github.svg" />
+  
+  
+
+  
+  
+  <script
+    defer
+    src="http://localhost:1313/highlight.min.js"
+    onload="hljs.initHighlightingOnLoad();"
+  ></script>
+  
+
+  
+  
+  
+
+  
+  <link rel="icon" href="http://localhost:1313/favicon.ico" />
+  <link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png" />
+
+  
+  <meta name="generator" content="Hugo 0.123.8">
+
+  
+  
+  
+</head>
+
+  <body class="text-black duration-200 ease-out dark:text-white">
+    <header class="mx-auto flex h-[4.5rem] max-w-3xl px-8 lg:justify-center">
+  <div class="relative z-50 mr-auto flex items-center">
+    <a
+      class="-translate-x-[1px] -translate-y-[1px] text-2xl font-semibold"
+      href="http://localhost:1313/"
+      >greathongtu 的 Blog</a
+    >
+    <div
+      class="btn-dark text-[0] ml-4 h-6 w-6 shrink-0 cursor-pointer [background:url(./theme.png)_left_center/_auto_theme('spacing.6')_no-repeat] [transition:_background-position_0.4s_steps(5)] dark:[background-position:right]"
+      role="button"
+      aria-label="Dark"
+    ></div>
+  </div>
+
+  <div
+    class="btn-menu relative z-50 -mr-8 flex h-[4.5rem] w-[5rem] shrink-0 cursor-pointer flex-col items-center justify-center gap-2.5 lg:hidden"
+    role="button"
+    aria-label="Menu"
+  ></div>
+
+  
+
+  <script>
+    
+    const htmlClass = document.documentElement.classList;
+    setTimeout(() => {
+      htmlClass.remove('not-ready');
+    }, 10);
+
+    
+    const btnMenu = document.querySelector('.btn-menu');
+    btnMenu.addEventListener('click', () => {
+      htmlClass.toggle('open');
+    });
+
+    
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    const lightBg = '#faf8f1'.replace(/"/g, '');
+    const setDark = (isDark) => {
+      metaTheme.setAttribute('content', isDark ? '#000' : lightBg);
+      htmlClass[isDark ? 'add' : 'remove']('dark');
+      localStorage.setItem('dark', isDark);
+    };
+
+    
+    const darkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+    if (htmlClass.contains('dark')) {
+      setDark(true);
+    } else {
+      const darkVal = localStorage.getItem('dark');
+      setDark(darkVal ? darkVal === 'true' : darkScheme.matches);
+    }
+
+    
+    darkScheme.addEventListener('change', (event) => {
+      setDark(event.matches);
+    });
+
+    
+    const btnDark = document.querySelector('.btn-dark');
+    btnDark.addEventListener('click', () => {
+      setDark(localStorage.getItem('dark') !== 'true');
+    });
+  </script>
+
+  <div
+    class="nav-wrapper fixed inset-x-0 top-full z-40 flex h-full select-none flex-col justify-center pb-16 duration-200 dark:bg-black lg:static lg:h-auto lg:flex-row lg:!bg-transparent lg:pb-0 lg:transition-none"
+  >
+    
+    
+
+    
+    <nav
+      class="mt-12 flex justify-center space-x-10 dark:invert lg:ml-12 lg:mt-0 lg:items-center lg:space-x-6"
+    >
+      
+      <a
+        class="h-8 w-8 text-[0] [background:var(--url)_center_center/cover_no-repeat] lg:h-6 lg:w-6"
+        style="--url: url(./github.svg)"
+        href="https://github.com/greathongtu"
+        target="_blank"
+        rel="me"
+      >
+        github
+      </a>
+      
+    </nav>
+    
+  </div>
+</header>
+
+
+    <main
+      class="prose prose-neutral relative mx-auto min-h-[calc(100%-9rem)] max-w-3xl px-8 pb-16 pt-12 dark:prose-invert"
+    >
+      
+
+<article>
+  <header class="mb-16">
+    <h1 class="!my-0 pb-2.5">Go 探究</h1>
+
+    
+    <div class="text-sm antialiased opacity-60">
+      
+      <time>Nov 19, 2023</time>
+      
+      
+      
+      
+    </div>
+    
+  </header>
+
+  <section><h2 id="数组">数组</h2>
+<p>如果数组中元素的个数小于或者等于 4 个，那么所有的变量会直接在栈上初始化，如果数组元素大于 4 个，变量就会在静态存储区初始化然后拷贝到栈上。 为什么？</p>
+<h2 id="slice">slice</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span>[]<span style="color:#66d9ef">int</span>
+</span></span><span style="display:flex;"><span>[]<span style="color:#66d9ef">interface</span>{}
+</span></span></code></pre></div><p><img src="/images/golang-slice-struct.png" alt="slice"></p>
+<p>切片提供了对数组中部分连续片段的引用，而作为数组的引用，我们可以在运行区间可以修改它的长度和范围。当切片底层的数组长度不足时就会触发扩容，切片指向的数组可能会发生变化，不过在上层看来切片是没有变化的，上层只需要与切片打交道不需要关心数组的变化。</p>
+<h3 id="追加和扩容">追加和扩容</h3>
+<ul>
+<li>先确定切片大致容量
+<ol>
+<li>如果期望容量大于当前容量的两倍就会使用期望容量；</li>
+<li>如果当前切片的长度小于 1024 就会将容量翻倍；</li>
+<li>如果当前切片的长度大于 1024 就会每次增加 25% 的容量，直到新容量大于期望容量；</li>
+</ol>
+</li>
+<li>再根据切片中的元素大小对齐内存</li>
+</ul>
+<h3 id="切片拷贝">切片拷贝</h3>
+<p>无论是编译期间拷贝还是运行时拷贝，两种拷贝方式都会通过 runtime.memmove 将整块内存的内容拷贝到目标的内存区域中：
+<img src="/images/go-slice-copy.png" alt="slice"></p>
+<p>大切片扩容或者复制时可能会发生大规模的内存拷贝，要注意。</p>
+<h2 id="map">map</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">hmap</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">count</span>     <span style="color:#66d9ef">int</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">flags</span>     <span style="color:#66d9ef">uint8</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">B</span>         <span style="color:#66d9ef">uint8</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">noverflow</span> <span style="color:#66d9ef">uint16</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">hash0</span>     <span style="color:#66d9ef">uint32</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">buckets</span>    <span style="color:#a6e22e">unsafe</span>.<span style="color:#a6e22e">Pointer</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">oldbuckets</span> <span style="color:#a6e22e">unsafe</span>.<span style="color:#a6e22e">Pointer</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">nevacuate</span>  <span style="color:#66d9ef">uintptr</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">extra</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">mapextra</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">mapextra</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">overflow</span>    <span style="color:#f92672">*</span>[]<span style="color:#f92672">*</span><span style="color:#a6e22e">bmap</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">oldoverflow</span> <span style="color:#f92672">*</span>[]<span style="color:#f92672">*</span><span style="color:#a6e22e">bmap</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">nextOverflow</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">bmap</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><ul>
+<li>count 表示当前哈希表中的元素数量；</li>
+<li>B 表示当前哈希表持有的 buckets 数量，但是因为哈希表中桶的数量都 2 的倍数，所以该字段会存储对数，也就是 len(buckets) == 2^B；</li>
+<li>hash0 是哈希的种子，它能为哈希函数的结果引入随机性，这个值在创建哈希表时确定，并在调用哈希函数时作为参数传入；</li>
+<li>oldbuckets 是哈希在扩容时用于保存之前 buckets 的字段，它的大小是当前 buckets 的一半；</li>
+</ul>
+<p><img src="/images/go-map.png" alt="map"></p>
+<p>如上图所示哈希表 runtime.hmap 的桶是 runtime.bmap。每一个 runtime.bmap 都能存储 8 个键值对，当哈希表中存储的数据过多，单个桶已经装满时就会使用 extra.nextOverflow 这个bmap 存储溢出的数据。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">bmap</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">topbits</span>  [<span style="color:#ae81ff">8</span>]<span style="color:#66d9ef">uint8</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 以下字段在运行时也是通过计算内存地址的方式访问的
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">keys</span>     [<span style="color:#ae81ff">8</span>]<span style="color:#a6e22e">keytype</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">values</span>   [<span style="color:#ae81ff">8</span>]<span style="color:#a6e22e">valuetype</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">pad</span>      <span style="color:#66d9ef">uintptr</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">overflow</span> <span style="color:#66d9ef">uintptr</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="map-初始化">map 初始化</h3>
+<ol>
+<li>字面量
+<ul>
+<li>当哈希表中的元素数量少于或者等于 25 个时：</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">hash</span> <span style="color:#f92672">:=</span> make(<span style="color:#66d9ef">map</span>[<span style="color:#66d9ef">string</span>]<span style="color:#66d9ef">int</span>, <span style="color:#ae81ff">3</span>)
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">hash</span>[<span style="color:#e6db74">&#34;1&#34;</span>] = <span style="color:#ae81ff">2</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">hash</span>[<span style="color:#e6db74">&#34;3&#34;</span>] = <span style="color:#ae81ff">4</span>
+</span></span><span style="display:flex;"><span><span style="color:#a6e22e">hash</span>[<span style="color:#e6db74">&#34;5&#34;</span>] = <span style="color:#ae81ff">6</span>
+</span></span></code></pre></div><ul>
+<li>元素的数量超过了 25 个: 编译器会创建两个数组分别存储键和值，这些键值对会通过 for 循环加入哈希：</li>
+</ul>
+</li>
+<li>运行时
+<ul>
+<li>当创建的哈希被分配到栈上并且其容量小于 BUCKETSIZE = 8 时，Go 语言在编译阶段会快速初始化哈希，这也是编译器对小容量的哈希做的优化</li>
+<li>除此之外，只要我们使用 make 创建哈希，最后都调用了 runtime.makemap：
+<ol>
+<li>计算哈希占用的内存是否溢出或者超出能分配的最大值；</li>
+<li>调用 runtime.fastrand 获取一个随机的哈希种子；</li>
+<li>根据传入的 hint 计算出需要的最小需要的桶的数量；</li>
+<li>使用 runtime.makeBucketArray 创建用于保存桶的数组: 当桶的数量小于 2^4 时不创建溢出桶；否则创建 2^(B-4) 个溢出桶。（正常桶和溢出桶在内存中的存储空间是连续的）</li>
+</ol>
+</li>
+</ul>
+</li>
+</ol>
+<h3 id="map-读写">map 读写</h3>
+<ul>
+<li>读：
+用于选择桶序号的是哈希的最低几位，而用于加速访问的是哈希的高 8 位，这种设计能够减少同一个桶中有大量相等 tophash 的概率影响性能。
+<img src="/images/go-hashmap-mapaccess.png" alt="map">
+注意：哈希表扩容并不是原子过程</li>
+<li>写：
+<img src="/images/go-hashmap-overflow-bucket.png" alt="overflow">
+<ul>
+<li>如果当前桶已经满了，哈希会调用 runtime.hmap.newoverflow 创建新桶或者使用 runtime.hmap 预先在 noverflow 中创建好的桶来保存数据，新创建的桶不仅会被追加到已有桶的末尾，还会增加哈希表的 noverflow 计数器。</li>
+<li>如果当前键值对在哈希中不存在，哈希会为新键值对规划存储的内存地址</li>
+</ul>
+</li>
+</ul>
+<h3 id="扩容">扩容</h3>
+<p>runtime.mapassign 函数会在以下两种情况发生时触发哈希的扩容：</p>
+<ul>
+<li>装载因子已经超过 6.5；</li>
+<li>哈希使用了太多溢出桶；</li>
+</ul>
+<p>根据触发的条件不同扩容的方式分成两种，如果这次扩容是溢出的桶太多导致的，那么这次扩容就是等量扩容 sameSizeGrow, 通过复用已有的哈希扩容机制解决缓慢的内存泄露问题，一旦哈希中出现了过多的溢出桶，它会创建新桶保存数据，垃圾回收会清理老的溢出桶并释放内存。</p>
+<p><img src="/images/go-hashmap-hashgrow.png" alt="hashgrow"></p>
+<ul>
+<li>扩容期间获取键值对的逻辑: 当哈希表的 oldbuckets 存在时，会先定位到旧桶并在该桶没有被分流时从中获取键值对。</li>
+<li>扩容期间写入/删除值：触发 runtime.growWork 增量拷贝哈希表中的内容：</li>
+</ul>
+<h2 id="string">string</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// 在运行时都会使用如下的 reflect.StringHeader 表示
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">StringHeader</span> <span style="color:#66d9ef">struct</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">Data</span> <span style="color:#66d9ef">uintptr</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">Len</span>  <span style="color:#66d9ef">int</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>字符串是一个只读的切片类型。所有在字符串上的写入操作都是通过拷贝实现的。
+<!-- raw HTML omitted --></p>
+<p>反引号声明的字符串在遇到需要手写 JSON 的场景下非常方便</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#a6e22e">json</span> <span style="color:#f92672">:=</span> <span style="color:#e6db74">`{&#34;author&#34;: &#34;draven&#34;, &#34;tags&#34;: [&#34;golang&#34;]}`</span>
+</span></span></code></pre></div><h3 id="字符串拼接">字符串拼接</h3>
+<p>使用 + 符号调用了 addstr 函数：</p>
+<ul>
+<li>如果字符串数量小于或者等于 5 个，那么会调用 concatstring{2,3,4,5} 等一系列函数；最终调用 runtime.concatstrings</li>
+<li>如果超过 5 个，那么会选择 runtime.concatstrings 传入一个数组切片；</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">concatstrings</span>(<span style="color:#a6e22e">buf</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">tmpBuf</span>, <span style="color:#a6e22e">a</span> []<span style="color:#66d9ef">string</span>) <span style="color:#66d9ef">string</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">idx</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">l</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">count</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">0</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">i</span>, <span style="color:#a6e22e">x</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">a</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">n</span> <span style="color:#f92672">:=</span> len(<span style="color:#a6e22e">x</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">n</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span> {
+</span></span><span style="display:flex;"><span>			<span style="color:#66d9ef">continue</span>
+</span></span><span style="display:flex;"><span>		}
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">l</span> <span style="color:#f92672">+=</span> <span style="color:#a6e22e">n</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">count</span><span style="color:#f92672">++</span>
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">idx</span> = <span style="color:#a6e22e">i</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">count</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span> {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#e6db74">&#34;&#34;</span>
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">if</span> <span style="color:#a6e22e">count</span> <span style="color:#f92672">==</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">&amp;&amp;</span> (<span style="color:#a6e22e">buf</span> <span style="color:#f92672">!=</span> <span style="color:#66d9ef">nil</span> <span style="color:#f92672">||</span> !<span style="color:#a6e22e">stringDataOnStack</span>(<span style="color:#a6e22e">a</span>[<span style="color:#a6e22e">idx</span>])) {
+</span></span><span style="display:flex;"><span>		<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">a</span>[<span style="color:#a6e22e">idx</span>]
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">s</span>, <span style="color:#a6e22e">b</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">rawstringtmp</span>(<span style="color:#a6e22e">buf</span>, <span style="color:#a6e22e">l</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">for</span> <span style="color:#a6e22e">_</span>, <span style="color:#a6e22e">x</span> <span style="color:#f92672">:=</span> <span style="color:#66d9ef">range</span> <span style="color:#a6e22e">a</span> {
+</span></span><span style="display:flex;"><span>		copy(<span style="color:#a6e22e">b</span>, <span style="color:#a6e22e">x</span>)
+</span></span><span style="display:flex;"><span>		<span style="color:#a6e22e">b</span> = <span style="color:#a6e22e">b</span>[len(<span style="color:#a6e22e">x</span>):]
+</span></span><span style="display:flex;"><span>	}
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">s</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><ul>
+<li>
+<p>如果非空字符串的数量为 1 并且当前的字符串不在栈上，就可以直接返回该字符串，不需要做出额外操作
+<img src="/images/go-string-concat-and-copy.png" alt="string"></p>
+</li>
+<li>
+<p>但正常情况下，运行时会调用 copy 将输入的多个字符串拷贝到目标字符串所在的内存空间。新的字符串是一片新的内存空间，与原来的字符串也没有任何关联，一旦需要拼接的字符串非常大，拷贝带来的性能损失是无法忽略的。</p>
+</li>
+</ul>
+<h3 id="类型转换">类型转换</h3>
+<p>string 和 []byte 之间的转换:</p>
+<ol>
+<li>string(bytes): 使用 runtime.slicebytetostring 函数：先处理两种比较常见的情况，也就是长度为 0 或者 1 的字节数组；处理过后会根据传入的缓冲区大小决定是否需要为新字符串分配一片内存空间，最后通过 runtime.memmove 将原 []byte 中的字节全部复制到新的内存空间中。</li>
+<li>string to []byte: 使用 runtime.stringtoslicebyte 函数:
+<ul>
+<li>当传入缓冲区时，它会使用传入的缓冲区存储 []byte；</li>
+<li>当没有传入缓冲区时，运行时会调用 runtime.rawbyteslice 创建新的字节切片并将字符串中的内容拷贝过去；</li>
+</ul>
+</li>
+</ol>
+<h3 id="string-小结">string 小结</h3>
+<p>在做拼接和类型转换等操作时一定要注意性能的损耗，遇到需要极致性能的场景一定要尽量减少类型转换的次数。</p>
+<h2 id="function-call">function call</h2>
+<p><img src="/images/c-function-call-stack.png" alt="c-function-call"></p>
+<ul>
+<li>六个以及六个以下的参数会按照顺序分别使用 edi、esi、edx、ecx、r8d 和 r9d 六个寄存器传递；</li>
+<li>六个以上的参数会使用栈传递，函数的参数会以从右到左的顺序依次存入栈中；</li>
+</ul>
+<p>而函数的返回值是通过 eax 寄存器进行传递的，由于只使用一个寄存器存储返回值，所以 C 语言的函数不能同时返回多个值。</p>
+<p><img src="/images/golang-function-call-stack-before-calling.png" alt="go-function-call"></p>
+<ul>
+<li>CPU 访问栈的开销比访问寄存器高几十倍；</li>
+<li>C 需要单独处理函数参数过多的情况；</li>
+<li>Go 不需要考虑超过寄存器数量的参数应该如何传递；</li>
+<li>Go 不需要考虑不同架构上的寄存器差异；</li>
+<li>Go 函数入参和出参的内存空间需要在栈上进行分配；</li>
+</ul>
+<h3 id="参数传递">参数传递</h3>
+<p>Go 语言选择了传值的方式，无论是传递基本类型、结构体还是指针，都会对传递的参数进行拷贝</p>
+<h2 id="接口">接口</h2>
+<p>Go 在接口中我们只能定义方法签名，不能包含成员变量. 接口的实现都是隐式的</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#66d9ef">error</span> <span style="color:#66d9ef">interface</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">Error</span>() <span style="color:#66d9ef">string</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><table>
+<thead>
+<tr>
+<th></th>
+<th>结构体实现接口</th>
+<th>结构体指针实现接口</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>结构体初始化变量</td>
+<td>通过</td>
+<td>不通过</td>
+</tr>
+<tr>
+<td>结构体指针初始化变量</td>
+<td>通过</td>
+<td>通过</td>
+</tr>
+</tbody>
+</table>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Cat</span> <span style="color:#66d9ef">struct</span> {}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Duck</span> <span style="color:#66d9ef">interface</span> { <span style="color:#f92672">...</span> }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">c</span>  <span style="color:#a6e22e">Cat</span>) <span style="color:#a6e22e">Quack</span> {}  <span style="color:#75715e">// 使用结构体实现接口
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">c</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Cat</span>) <span style="color:#a6e22e">Quack</span> {}  <span style="color:#75715e">// 使用结构体指针实现接口
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">d</span> <span style="color:#a6e22e">Duck</span> = <span style="color:#a6e22e">Cat</span>{}      <span style="color:#75715e">// 使用结构体初始化变量
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">d</span> <span style="color:#a6e22e">Duck</span> = <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">Cat</span>{}     <span style="color:#75715e">// 使用结构体指针初始化变量
+</span></span></span></code></pre></div><p>方法的接受者是结构体，而初始化的变量是结构体指针之所以可以：作为指针的 &amp;Cat{} 变量能够<strong>隐式地获取</strong>到指向的结构体</p>
+<p>Go 语言的接口类型不是任意类型</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#f92672">package</span> <span style="color:#a6e22e">main</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">TestStruct</span> <span style="color:#66d9ef">struct</span>{}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">NilOrNot</span>(<span style="color:#a6e22e">v</span> <span style="color:#66d9ef">interface</span>{}) <span style="color:#66d9ef">bool</span> {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">return</span> <span style="color:#a6e22e">v</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">nil</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">s</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">TestStruct</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">s</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">nil</span>)      <span style="color:#75715e">// #=&gt; true
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">NilOrNot</span>(<span style="color:#a6e22e">s</span>))   <span style="color:#75715e">// #=&gt; false
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span></code></pre></div><p>原因： 调用 NilOrNot 函数时发生了<strong>隐式类型转换</strong>，转换后的变量不仅包含转换前的变量，还包含变量的类型信息 TestStruct</p>
+<h3 id="数据结构">数据结构</h3>
+<ul>
+<li>不包含任何方法的 interface{} 类型 eface：只包含指向底层数据和类型的两个指针。所以 Go 语言的任意类型都可以转换成 interface{}
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">eface</span> <span style="color:#66d9ef">struct</span> { <span style="color:#75715e">// 16 字节
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">_type</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">_type</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">data</span>  <span style="color:#a6e22e">unsafe</span>.<span style="color:#a6e22e">Pointer</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div></li>
+<li>runtime.iface:
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">iface</span> <span style="color:#66d9ef">struct</span> { <span style="color:#75715e">// 16 字节
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">tab</span>  <span style="color:#f92672">*</span><span style="color:#a6e22e">itab</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">data</span> <span style="color:#a6e22e">unsafe</span>.<span style="color:#a6e22e">Pointer</span>
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div></li>
+</ul>
+<p>itab 和 _type 的区别：</p>
+<ul>
+<li>_type: Go 语言类型的运行时表示，包含类型的大小、哈希、对齐以及种类等。</li>
+<li>itab 32 字节，包含用于动态派发的虚函数表 fun [1]uintptr</li>
+</ul>
+<p>使用结构体实现接口带来的开销会大于使用指针实现，而动态派发在结构体上的表现非常差，这也提醒我们应当尽量避免使用结构体类型实现接口。</p>
+<h2 id="reflect">reflect</h2>
+<p>反射修改变量：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">i</span> <span style="color:#f92672">:=</span> <span style="color:#ae81ff">1</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">v</span> <span style="color:#f92672">:=</span> <span style="color:#a6e22e">reflect</span>.<span style="color:#a6e22e">ValueOf</span>(<span style="color:#f92672">&amp;</span><span style="color:#a6e22e">i</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">v</span>.<span style="color:#a6e22e">Elem</span>().<span style="color:#a6e22e">SetInt</span>(<span style="color:#ae81ff">10</span>)
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">i</span>)
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#960050;background-color:#1e0010">$</span> <span style="color:#66d9ef">go</span> <span style="color:#a6e22e">run</span> <span style="color:#a6e22e">reflect</span>.<span style="color:#66d9ef">go</span>
+</span></span><span style="display:flex;"><span><span style="color:#ae81ff">10</span>
+</span></span></code></pre></div></section>
+
+  
+  
+  <footer class="mt-12 flex flex-wrap">
+     
+    <a
+      class="mb-1.5 mr-1.5 rounded-lg bg-black/[3%] px-5 py-1.5 no-underline dark:bg-white/[8%]"
+      href="http://localhost:1313/tags/go"
+      >go</a
+    >
+    
+  </footer>
+  
+
+  
+  
+  
+  
+  <nav class="mt-24 flex rounded-lg bg-black/[3%] text-lg dark:bg-white/[8%]">
+    
+    <a
+      class="flex w-1/2 items-center rounded-l-md p-6 pr-3 font-semibold no-underline hover:bg-black/[2%] dark:hover:bg-white/[3%]"
+      href="http://localhost:1313/posts/map-reduce/"
+      ><span class="mr-1.5">←</span><span>Map Reduce 的实现</span></a
+    >
+    
+    
+    <a
+      class="ml-auto flex w-1/2 items-center justify-end rounded-r-md p-6 pl-3 font-semibold no-underline hover:bg-black/[2%] dark:hover:bg-white/[3%]"
+      href="http://localhost:1313/posts/sql-summary/"
+      ><span>sql 总结</span><span class="ml-1.5">→</span></a
+    >
+    
+  </nav>
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+</article>
+
+
+    </main>
+
+    <footer
+  class="opaco mx-auto flex h-[4.5rem] max-w-3xl items-center px-8 text-[0.9em] opacity-60"
+>
+  <div class="mr-auto">
+    &copy; 2024
+    <a class="link" href="http://localhost:1313/">greathongtu 的 Blog</a>
+  </div>
+  <a class="link mx-6" href="https://gohugo.io/" rel="noopener" target="_blank"
+    >Powered by Hugo️️</a
+  >️
+  <a
+    class="link"
+    href="https://github.com/nanxiaobei/hugo-paper"
+    rel="noopener"
+    target="_blank"
+    >✎ Paper</a
+  >
+</footer>
+
+  </body>
+</html>

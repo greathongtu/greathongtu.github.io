@@ -1,0 +1,649 @@
+<!doctype html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html
+  class="not-ready lg:text-base"
+  style="--bg: #faf8f1"
+  lang="en-us"
+>
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, shrink-to-fit=no"
+  />
+
+  
+  <title>Cpp Concurrency - greathongtu 的 Blog</title>
+
+  
+  <meta name="theme-color" />
+
+  
+  
+  
+  
+  <meta name="description" content="#include &lt;iostream&gt; #include &lt;thread&gt; void hello() { std::cout &lt;&lt; &#34;Hello Concurrent World\n&#34;; } int main() { std::cout &lt;&lt; &#34;first main&#34; &lt;&lt; std::endl; std::thread t(hello); std::cout &lt;&lt; &#34;from main thread!&#34; &lt;&lt; std::endl; // t.join(); t.detach(); } 等待：join
+不等：detach 如后台监控线程
+精细化控制： condition variables and futures
+join之前发生exception怎么办呢：try catch. 更好的方式：RAII
+class thread_guard { std::thread &amp;t; public: explicit thread_guard(std::thread &amp;t_) : t(std::move(t_)) { if (!t.joinable()) { throw std::logic_error(“No thread”); } } ~thread_guard() { t.join(); } thread_guard(thread_guard const &amp;) = delete; thread_guard &amp;operator=(thread_guard const &amp;) = delete; }; // usage std::thread t(my_func); thread_guard g(t); 向thread对象传参的时候要注意隐式类型转换：" />
+  <meta name="author" content="greathongtu 的 Blog" />
+  
+
+  
+  
+  
+  
+  
+  
+  <link rel="preload stylesheet" as="style" href="http://localhost:1313/main.min.css" />
+
+  
+  
+  
+  
+  
+  <link rel="preload" as="image" href="http://localhost:1313/theme.png" />
+
+  
+  
+  
+  
+  
+
+  
+  
+  <link rel="preload" as="image" href="http://localhost:1313/github.svg" />
+  
+  
+
+  
+  
+  <script
+    defer
+    src="http://localhost:1313/highlight.min.js"
+    onload="hljs.initHighlightingOnLoad();"
+  ></script>
+  
+
+  
+  
+  
+
+  
+  <link rel="icon" href="http://localhost:1313/favicon.ico" />
+  <link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png" />
+
+  
+  <meta name="generator" content="Hugo 0.123.8">
+
+  
+  
+  
+</head>
+
+  <body class="text-black duration-200 ease-out dark:text-white">
+    <header class="mx-auto flex h-[4.5rem] max-w-3xl px-8 lg:justify-center">
+  <div class="relative z-50 mr-auto flex items-center">
+    <a
+      class="-translate-x-[1px] -translate-y-[1px] text-2xl font-semibold"
+      href="http://localhost:1313/"
+      >greathongtu 的 Blog</a
+    >
+    <div
+      class="btn-dark text-[0] ml-4 h-6 w-6 shrink-0 cursor-pointer [background:url(./theme.png)_left_center/_auto_theme('spacing.6')_no-repeat] [transition:_background-position_0.4s_steps(5)] dark:[background-position:right]"
+      role="button"
+      aria-label="Dark"
+    ></div>
+  </div>
+
+  <div
+    class="btn-menu relative z-50 -mr-8 flex h-[4.5rem] w-[5rem] shrink-0 cursor-pointer flex-col items-center justify-center gap-2.5 lg:hidden"
+    role="button"
+    aria-label="Menu"
+  ></div>
+
+  
+
+  <script>
+    
+    const htmlClass = document.documentElement.classList;
+    setTimeout(() => {
+      htmlClass.remove('not-ready');
+    }, 10);
+
+    
+    const btnMenu = document.querySelector('.btn-menu');
+    btnMenu.addEventListener('click', () => {
+      htmlClass.toggle('open');
+    });
+
+    
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    const lightBg = '#faf8f1'.replace(/"/g, '');
+    const setDark = (isDark) => {
+      metaTheme.setAttribute('content', isDark ? '#000' : lightBg);
+      htmlClass[isDark ? 'add' : 'remove']('dark');
+      localStorage.setItem('dark', isDark);
+    };
+
+    
+    const darkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+    if (htmlClass.contains('dark')) {
+      setDark(true);
+    } else {
+      const darkVal = localStorage.getItem('dark');
+      setDark(darkVal ? darkVal === 'true' : darkScheme.matches);
+    }
+
+    
+    darkScheme.addEventListener('change', (event) => {
+      setDark(event.matches);
+    });
+
+    
+    const btnDark = document.querySelector('.btn-dark');
+    btnDark.addEventListener('click', () => {
+      setDark(localStorage.getItem('dark') !== 'true');
+    });
+  </script>
+
+  <div
+    class="nav-wrapper fixed inset-x-0 top-full z-40 flex h-full select-none flex-col justify-center pb-16 duration-200 dark:bg-black lg:static lg:h-auto lg:flex-row lg:!bg-transparent lg:pb-0 lg:transition-none"
+  >
+    
+    
+
+    
+    <nav
+      class="mt-12 flex justify-center space-x-10 dark:invert lg:ml-12 lg:mt-0 lg:items-center lg:space-x-6"
+    >
+      
+      <a
+        class="h-8 w-8 text-[0] [background:var(--url)_center_center/cover_no-repeat] lg:h-6 lg:w-6"
+        style="--url: url(./github.svg)"
+        href="https://github.com/greathongtu"
+        target="_blank"
+        rel="me"
+      >
+        github
+      </a>
+      
+    </nav>
+    
+  </div>
+</header>
+
+
+    <main
+      class="prose prose-neutral relative mx-auto min-h-[calc(100%-9rem)] max-w-3xl px-8 pb-16 pt-12 dark:prose-invert"
+    >
+      
+
+<article>
+  <header class="mb-16">
+    <h1 class="!my-0 pb-2.5">Cpp Concurrency</h1>
+
+    
+    <div class="text-sm antialiased opacity-60">
+      
+      <time>Dec 8, 2023</time>
+      
+      
+      
+      
+    </div>
+    
+  </header>
+
+  <section><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;iostream&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">#include</span> <span style="color:#75715e">&lt;thread&gt;</span><span style="color:#75715e">
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">hello</span>() { std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;Hello Concurrent World</span><span style="color:#ae81ff">\n</span><span style="color:#e6db74">&#34;</span>; }
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>  std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;first main&#34;</span> <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>endl;
+</span></span><span style="display:flex;"><span>  std<span style="color:#f92672">::</span><span style="color:#66d9ef">thread</span> t(hello);
+</span></span><span style="display:flex;"><span>  std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;from main thread!&#34;</span> <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>endl;
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// t.join();
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  t.detach();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>等待：join</p>
+<p>不等：detach 如后台监控线程</p>
+<p>精细化控制： condition variables and futures</p>
+<p>join之前发生exception怎么办呢：try catch. 更好的方式：RAII</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">thread_guard</span> {
+</span></span><span style="display:flex;"><span>  std<span style="color:#f92672">::</span><span style="color:#66d9ef">thread</span> <span style="color:#f92672">&amp;</span>t;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">explicit</span> thread_guard(std<span style="color:#f92672">::</span><span style="color:#66d9ef">thread</span> <span style="color:#f92672">&amp;</span>t_) <span style="color:#f92672">:</span> t(std<span style="color:#f92672">::</span>move(t_)) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>t.joinable()) {
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">throw</span> std<span style="color:#f92672">::</span>logic_error(<span style="color:#960050;background-color:#1e0010">“</span>No <span style="color:#66d9ef">thread</span><span style="color:#960050;background-color:#1e0010">”</span>);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>  <span style="color:#f92672">~</span>thread_guard() {
+</span></span><span style="display:flex;"><span>    t.join(); 
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>  thread_guard(thread_guard <span style="color:#66d9ef">const</span> <span style="color:#f92672">&amp;</span>) <span style="color:#f92672">=</span> <span style="color:#66d9ef">delete</span>;
+</span></span><span style="display:flex;"><span>  thread_guard <span style="color:#f92672">&amp;</span><span style="color:#66d9ef">operator</span><span style="color:#f92672">=</span>(thread_guard <span style="color:#66d9ef">const</span> <span style="color:#f92672">&amp;</span>) <span style="color:#f92672">=</span> <span style="color:#66d9ef">delete</span>;
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// usage
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>std<span style="color:#f92672">::</span><span style="color:#66d9ef">thread</span> t(my_func);
+</span></span><span style="display:flex;"><span>thread_guard <span style="color:#a6e22e">g</span>(t);
+</span></span></code></pre></div><p>向thread对象传参的时候要注意隐式类型转换：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">char</span> buffer[<span style="color:#ae81ff">1024</span>];
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// dangling pointer alert!
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>std<span style="color:#f92672">::</span><span style="color:#66d9ef">thread</span> t(f,<span style="color:#ae81ff">3</span>,buffer);
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Ok
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>std<span style="color:#f92672">::</span><span style="color:#66d9ef">thread</span> t(f,<span style="color:#ae81ff">3</span>,std<span style="color:#f92672">::</span>string(buffer));
+</span></span></code></pre></div><p>thread对象的function的参数要引用的情况：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#75715e">// widget_data 需要引用
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">update_data_for_widget</span>(widget_id w, widget_data <span style="color:#f92672">&amp;</span>data);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">oops_again</span>(widget_id w) {
+</span></span><span style="display:flex;"><span>  widget_data data;
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// 这里先拷贝w 和 data，然后传rvalues 给需要non-const reference的function
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#75715e">// compile error!
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  std<span style="color:#f92672">::</span><span style="color:#66d9ef">thread</span> t(update_data_for_widget, w, data);
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// 解决办法：
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  std<span style="color:#f92672">::</span><span style="color:#66d9ef">thread</span> t(update_data_for_widget, w, std<span style="color:#f92672">::</span>ref(data));
+</span></span><span style="display:flex;"><span>  display_status();
+</span></span><span style="display:flex;"><span>  t.join();
+</span></span><span style="display:flex;"><span>  process_widget_data(data);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>std::thread像std::bind一样</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">X</span> {
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">void</span> do_lengthy_work();
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>X my_x;
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 第三个参数开始就是成员函数的参数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>std<span style="color:#f92672">::</span><span style="color:#66d9ef">thread</span> t(<span style="color:#f92672">&amp;</span>X<span style="color:#f92672">::</span>do_lengthy_work, <span style="color:#f92672">&amp;</span>my_x);
+</span></span></code></pre></div><p>可以把unique_ptr move进参数。thread对象本身也是可以move不可以copy的</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span>std<span style="color:#f92672">::</span><span style="color:#66d9ef">thread</span> t1(some_function);
+</span></span><span style="display:flex;"><span>std<span style="color:#f92672">::</span><span style="color:#66d9ef">thread</span> t2 <span style="color:#f92672">=</span> std<span style="color:#f92672">::</span><span style="color:#66d9ef">thread</span>(some_other_function);
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// terminate! you must explicitly wait for a thread to complete or detach it before destruction,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>t1 <span style="color:#f92672">=</span> std<span style="color:#f92672">::</span>move(t2);
+</span></span></code></pre></div><p>用std::vector管理std::thread 可以在runtime创建动态数量的thread</p>
+<p>thread id : std::thread::get_id() 或者 std::this_thread::get_id()</p>
+<h2 id="sharing-data-with-mutex">Sharing Data with mutex</h2>
+<p>If all shared data is read-only, there’s no problem。</p>
+<p>std::mutex -&gt; std::lock_guard -&gt; std::scoped_lock</p>
+<p>Don’t pass pointers and references to protected data outside the scope of the lock,</p>
+<h3 id="避免死锁的方法">避免死锁的方法：</h3>
+<ul>
+<li>lock the two mutexes in a fixed order</li>
+<li>std::lock 同时锁多个mutex 而不会死锁</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">swap</span>(X <span style="color:#f92672">&amp;</span>lhs, X <span style="color:#f92672">&amp;</span>rhs) {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> (<span style="color:#f92672">&amp;</span>lhs <span style="color:#f92672">==</span> <span style="color:#f92672">&amp;</span>rhs)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span>;
+</span></span><span style="display:flex;"><span>  std<span style="color:#f92672">::</span>lock(lhs.m, rhs.m);
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// 注意 adopt_lock
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  std<span style="color:#f92672">::</span>lock_guard<span style="color:#f92672">&lt;</span>std<span style="color:#f92672">::</span>mutex<span style="color:#f92672">&gt;</span> lock_a(lhs.m, std<span style="color:#f92672">::</span>adopt_lock);
+</span></span><span style="display:flex;"><span>  std<span style="color:#f92672">::</span>lock_guard<span style="color:#f92672">&lt;</span>std<span style="color:#f92672">::</span>mutex<span style="color:#f92672">&gt;</span> lock_b(rhs.m, std<span style="color:#f92672">::</span>adopt_lock);
+</span></span><span style="display:flex;"><span>  swap(lhs.some_detail, rhs.some_detail);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>用 scoped_lock 简化：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">swap</span>(X <span style="color:#f92672">&amp;</span>lhs, X <span style="color:#f92672">&amp;</span>rhs) {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> (<span style="color:#f92672">&amp;</span>lhs <span style="color:#f92672">==</span> <span style="color:#f92672">&amp;</span>rhs)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span>;
+</span></span><span style="display:flex;"><span>  std<span style="color:#f92672">::</span>scoped_lock guard(lhs.m, rhs.m);
+</span></span><span style="display:flex;"><span>  swap(lhs.some_detail, rhs.some_detail);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><ul>
+<li>don’t wait for another thread if there’s a chance it’s waiting for you</li>
+<li>AVOID NESTED LOCKS 已经有一个锁的时候就不要再acquire lock</li>
+<li>AVOID CALLING USER-SUPPLIED CODE WHILE HOLDING A LOCK</li>
+<li>USE A LOCK HIERARCHY: 从上层锁到下层</li>
+</ul>
+<h3 id="比lock_guard更灵活的-stdunique_lock">比lock_guard更灵活的 std::unique_lock</h3>
+<p>using std::unique_lock and std::defer_lock B, rather than std::lock_guard and std::adopt_lock. 更灵活但更耗空间，更慢。最好还是用scoped_lock。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">swap</span>(X <span style="color:#f92672">&amp;</span>lhs, X <span style="color:#f92672">&amp;</span>rhs) {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> (<span style="color:#f92672">&amp;</span>lhs <span style="color:#f92672">==</span> <span style="color:#f92672">&amp;</span>rhs)
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span>;
+</span></span><span style="display:flex;"><span>  std<span style="color:#f92672">::</span>unique_lock<span style="color:#f92672">&lt;</span>std<span style="color:#f92672">::</span>mutex<span style="color:#f92672">&gt;</span> lock_a(lhs.m, std<span style="color:#f92672">::</span>defer_lock);
+</span></span><span style="display:flex;"><span>  std<span style="color:#f92672">::</span>unique_lock<span style="color:#f92672">&lt;</span>std<span style="color:#f92672">::</span>mutex<span style="color:#f92672">&gt;</span> lock_b(rhs.m, std<span style="color:#f92672">::</span>defer_lock);
+</span></span><span style="display:flex;"><span>  std<span style="color:#f92672">::</span>lock(lock_a, lock_b);
+</span></span><span style="display:flex;"><span>  swap(lhs.some_detail, rhs.some_detail);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="transferring-mutex-ownership-between-scopes">Transferring mutex ownership between scopes</h3>
+<p>因为std::unique_lock不拥有mutex，mutex的ownership可以在intance之间move</p>
+<h3 id="locking-at-an-appropriate-granularity">Locking at an appropriate granularity</h3>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">get_and_process_data</span>() {
+</span></span><span style="display:flex;"><span>  std<span style="color:#f92672">::</span>unique_lock<span style="color:#f92672">&lt;</span>std<span style="color:#f92672">::</span>mutex<span style="color:#f92672">&gt;</span> my_lock(the_mutex);
+</span></span><span style="display:flex;"><span>  some_class data_to_process <span style="color:#f92672">=</span> get_next_data_chunk();
+</span></span><span style="display:flex;"><span>  my_lock.unlock();
+</span></span><span style="display:flex;"><span>  result_type result <span style="color:#f92672">=</span> process(data_to_process);
+</span></span><span style="display:flex;"><span>  my_lock.lock();
+</span></span><span style="display:flex;"><span>  write_result(data_to_process, result);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>appropriate granularity不仅指data的数量，还指锁的时长</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">Y</span> {
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">private</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">int</span> some_detail;
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">mutable</span> std<span style="color:#f92672">::</span>mutex m;
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">int</span> <span style="color:#a6e22e">get_detail</span>() <span style="color:#66d9ef">const</span> {
+</span></span><span style="display:flex;"><span>    std<span style="color:#f92672">::</span>lock_guard<span style="color:#f92672">&lt;</span>std<span style="color:#f92672">::</span>mutex<span style="color:#f92672">&gt;</span> lock_a(m);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> some_detail;
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>  Y(<span style="color:#66d9ef">int</span> sd) <span style="color:#f92672">:</span> some_detail(sd) {}
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">friend</span> <span style="color:#66d9ef">bool</span> <span style="color:#66d9ef">operator</span><span style="color:#f92672">==</span>(Y <span style="color:#66d9ef">const</span> <span style="color:#f92672">&amp;</span>lhs, Y <span style="color:#66d9ef">const</span> <span style="color:#f92672">&amp;</span>rhs) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">&amp;</span>lhs <span style="color:#f92672">==</span> <span style="color:#f92672">&amp;</span>rhs)
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">return</span> true;
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> <span style="color:#66d9ef">const</span> lhs_value <span style="color:#f92672">=</span> lhs.get_detail();
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> <span style="color:#66d9ef">const</span> rhs_value <span style="color:#f92672">=</span> rhs.get_detail();
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> lhs_value <span style="color:#f92672">==</span> rhs_value;
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>};
+</span></span></code></pre></div><p>if you don’t hold the required locks for the entire duration of an operation, you’re exposing yourself to race conditions.上面相等只能说明lhs在某一时间跟rhs在另外一个时间是相等。</p>
+<h2 id="除mutex-别的保护shared-data的方法">除mutex 别的保护shared data的方法</h2>
+<p>One common case is where the shared data needs protection only from concurrent access while it’s being initialized, but after that no explicit synchronization is required(比如data创建之后就是read only的了)</p>
+<h3 id="protecting-shared-data-during-initialization">Protecting shared data during initialization</h3>
+<ul>
+<li>
+<p>单线程的时候可以Lazy initialization：看一下没创建的话再去创建。</p>
+</li>
+<li>
+<p>naive加锁的多线程方法unnecessary serialization，性能太差</p>
+</li>
+<li>
+<p>double checked locking 会race：</p>
+</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">undefined_behaviour_with_double_checked_locking</span>() {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>resource_ptr) { <span style="color:#75715e">// read
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    std<span style="color:#f92672">::</span>lock_guard<span style="color:#f92672">&lt;</span>std<span style="color:#f92672">::</span>mutex<span style="color:#f92672">&gt;</span> lk(resource_mutex);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (<span style="color:#f92672">!</span>resource_ptr) {
+</span></span><span style="display:flex;"><span>      resource_ptr.reset(<span style="color:#66d9ef">new</span> some_resource); <span style="color:#75715e">// write
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    }
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>  resource_ptr<span style="color:#f92672">-&gt;</span>do_something();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>read 和 write 没有同步，会race。
+even if a thread sees the pointer written by another thread, it might not see the newly created instance of some_resource, resulting in the call to do_something() e operating on incorrect values.</p>
+<ul>
+<li>std::once_flag 和 std::call_once</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span>std<span style="color:#f92672">::</span>shared_ptr<span style="color:#f92672">&lt;</span>some_resource<span style="color:#f92672">&gt;</span> resource_ptr;
+</span></span><span style="display:flex;"><span>std<span style="color:#f92672">::</span>once_flag resource_flag;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">init_resource</span>() { resource_ptr.reset(<span style="color:#66d9ef">new</span> some_resource); }
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">foo</span>() {
+</span></span><span style="display:flex;"><span>  <span style="color:#75715e">// the pointer will have been initialized by some thread (synchronizly) by the time std::call_once returns
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  <span style="color:#75715e">// synchronization data 存在 once_flag 里
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>  std<span style="color:#f92672">::</span>call_once(resource_flag, init_resource);
+</span></span><span style="display:flex;"><span>  resource_ptr<span style="color:#f92672">-&gt;</span>do_something();
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>除了通过function的方式，还可以被用在lazy initialization of class
+members</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">class</span> <span style="color:#a6e22e">X</span> {
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">private</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>  connection_info connection_details;
+</span></span><span style="display:flex;"><span>  connection_handle connection;
+</span></span><span style="display:flex;"><span>  std<span style="color:#f92672">::</span>once_flag connection_init_flag;
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">open_connection</span>() {
+</span></span><span style="display:flex;"><span>    connection <span style="color:#f92672">=</span> connection_manager.open(connection_details);
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">public</span><span style="color:#f92672">:</span>
+</span></span><span style="display:flex;"><span>  X(connection_info <span style="color:#66d9ef">const</span> <span style="color:#f92672">&amp;</span>connection_details_)
+</span></span><span style="display:flex;"><span>      <span style="color:#f92672">:</span> connection_details(connection_details_) {}
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">send_data</span>(data_packet <span style="color:#66d9ef">const</span> <span style="color:#f92672">&amp;</span>data) {
+</span></span><span style="display:flex;"><span>    std<span style="color:#f92672">::</span>call_once(connection_init_flag, <span style="color:#f92672">&amp;</span>X<span style="color:#f92672">::</span>open_connection, <span style="color:#66d9ef">this</span>);
+</span></span><span style="display:flex;"><span>    connection.send_data(data);
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>  data_packet <span style="color:#a6e22e">receive_data</span>() {
+</span></span><span style="display:flex;"><span>    std<span style="color:#f92672">::</span>call_once(connection_init_flag, <span style="color:#f92672">&amp;</span>X<span style="color:#f92672">::</span>open_connection, <span style="color:#66d9ef">this</span>);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">return</span> connection.receive_data();
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>};
+</span></span></code></pre></div><p>上面的例子中 send_data() 和 receive_data() 两者中更先被call的完成init.</p>
+<p>像mutex一样，once_flag也不能被copy、move</p>
+<ul>
+<li>local static variables的初始化occur the first time control passes through its declaration。多线程环境下这就会race,c++11之后的compiler就没问题了。所以可以通过这种方式替代call_once() where a single global instance is required</li>
+</ul>
+<h3 id="protecting-rarely-updated-data-structures">Protecting rarely updated data structures</h3>
+<p>比如DNS信息：读写锁：std::shared_mutex 和 std::shared_timed_mutex.</p>
+<p>通过std::shared_lock<a href="std::shared_mutex">std::shared_mutex</a> 获得shared access；
+通过std::lock_guard<a href="std::shared_mutex">std::shared_mutex</a> 或者std::unique_lock<a href="std::shared_mutex">std::shared_mutex</a> 获得 exclusive access</p>
+<p>(mutable 关键词：在const 函数中也可以修改mutable变量，所以适合用在mutex上，因为mutex要lock、unlock)</p>
+<h3 id="recursive-locking">Recursive locking</h3>
+<p>重复锁同一个mutex是UB.</p>
+<p>std::recursive_mutex：可重复锁，（但要记得锁了几次最后还得解锁几次，通过RAII就行）</p>
+<p><strong>Most of the time, if you think you want a recursive mutex, you probably need to change your design instead.</strong></p>
+<p>common use: 每一个public成员函数都lock了，一个public成员函数会call 另一个.
+<strong>But such usage is not recommended</strong> because it can lead to sloppy thinking and bad design. The class invariants are typically broken.</p>
+<p>Better to extract a new private member function which does not lock the mutex</p>
+<h1 id="synchronizing-concurrent-operations">Synchronizing concurrent operations</h1>
+<p>上面讲的是保护data, 这里讲同步action：condition variables 和 futures。还有latches and barriers</p>
+<ul>
+<li>Waiting for an event</li>
+<li>Waiting for one-off events with futures</li>
+<li>Waiting with a time limit</li>
+<li>Using the synchronization of operations to simplify code</li>
+</ul>
+<h2 id="condition_variables">condition_variables</h2>
+<p>为什么要条件变量：等event发生，要么不停地检查flag浪费资源；要么std::this_thread::sleep_for() 但是不好确定到底睡多久。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span>std<span style="color:#f92672">::</span>mutex mut;
+</span></span><span style="display:flex;"><span>std<span style="color:#f92672">::</span>queue<span style="color:#f92672">&lt;</span>data_chunk<span style="color:#f92672">&gt;</span> data_queue;
+</span></span><span style="display:flex;"><span>std<span style="color:#f92672">::</span>condition_variable data_cond;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">data_preparation_thread</span>() {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">while</span> (more_data_to_prepare()) {
+</span></span><span style="display:flex;"><span>    data_chunk <span style="color:#66d9ef">const</span> data <span style="color:#f92672">=</span> prepare_data();
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      std<span style="color:#f92672">::</span>lock_guard<span style="color:#f92672">&lt;</span>std<span style="color:#f92672">::</span>mutex<span style="color:#f92672">&gt;</span> lk(mut);
+</span></span><span style="display:flex;"><span>      data_queue.push(data);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    data_cond.notify_one();
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">data_processing_thread</span>() {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">while</span> (true) {
+</span></span><span style="display:flex;"><span>    std<span style="color:#f92672">::</span>unique_lock<span style="color:#f92672">&lt;</span>std<span style="color:#f92672">::</span>mutex<span style="color:#f92672">&gt;</span> lk(mut);
+</span></span><span style="display:flex;"><span>    data_cond.wait(lk, [] { <span style="color:#66d9ef">return</span> <span style="color:#f92672">!</span>data_queue.empty(); });
+</span></span><span style="display:flex;"><span>    data_chunk data <span style="color:#f92672">=</span> data_queue.front();
+</span></span><span style="display:flex;"><span>    data_queue.pop();
+</span></span><span style="display:flex;"><span>    lk.unlock();
+</span></span><span style="display:flex;"><span>    process(data);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> (is_last_chunk(data))
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">break</span>;
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>上面用unique_lock 搭配conditon_variable 是因为the waiting thread must unlock the mutex while it’s waiting and lock it again afterward, and std::lock_guard doesn’t provide that flexibility</p>
+<h2 id="futures">futures</h2>
+<p>std::future&lt;&gt; 和 std::shared_future&lt;&gt;</p>
+<h3 id="returning-values-from-background-tasks">Returning values from background tasks</h3>
+<p>use <strong>std::async</strong> to start an asynchronous task，returns a std::future object。 call get() on the future to block until returning the value.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span>std<span style="color:#f92672">::</span>future<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">int</span><span style="color:#f92672">&gt;</span> the_answer <span style="color:#f92672">=</span> std<span style="color:#f92672">::</span>async(find_the_answer_to_ltuae);
+</span></span><span style="display:flex;"><span>do_other_stuff();
+</span></span><span style="display:flex;"><span>std<span style="color:#f92672">::</span>cout <span style="color:#f92672">&lt;&lt;</span> <span style="color:#e6db74">&#34;The answer is &#34;</span> <span style="color:#f92672">&lt;&lt;</span> the_answer.get() <span style="color:#f92672">&lt;&lt;</span> std<span style="color:#f92672">::</span>endl;
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">X</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">void</span> <span style="color:#a6e22e">foo</span>(<span style="color:#66d9ef">int</span>, std<span style="color:#f92672">::</span>string <span style="color:#66d9ef">const</span> <span style="color:#f92672">&amp;</span>);
+</span></span><span style="display:flex;"><span>  std<span style="color:#f92672">::</span>string bar(std<span style="color:#f92672">::</span>string <span style="color:#66d9ef">const</span> <span style="color:#f92672">&amp;</span>);
+</span></span><span style="display:flex;"><span>};
+</span></span><span style="display:flex;"><span>X x;
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Calls p-&gt;foo(42,&#34;hello&#34;) where p is &amp;x
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">auto</span> f1 <span style="color:#f92672">=</span> std<span style="color:#f92672">::</span>async(<span style="color:#f92672">&amp;</span>X<span style="color:#f92672">::</span>foo, <span style="color:#f92672">&amp;</span>x, <span style="color:#ae81ff">42</span>, <span style="color:#e6db74">&#34;hello&#34;</span>);
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Calls tmpx.bar(&#34;goodbye&#34;) where tmpx is a copy of x
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">auto</span> f2 <span style="color:#f92672">=</span> std<span style="color:#f92672">::</span>async(<span style="color:#f92672">&amp;</span>X<span style="color:#f92672">::</span>bar, x, <span style="color:#e6db74">&#34;goodbye&#34;</span>);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Y</span> {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">double</span> <span style="color:#a6e22e">operator</span>()(<span style="color:#66d9ef">double</span>);
+</span></span><span style="display:flex;"><span>};
+</span></span></code></pre></div><p>an additional parameter to std::async before the function to call: std::launch, 要么是std::launch::deferred 等到wait() 或者get()被call的时候才调用；要么是std::launch::async 开一个新线程。或者std::launch::deferred | std::launch::async 代表由实现自己选择(默认)。</p>
+<h3 id="associating-a-task-with-a-future">Associating a task with a future</h3>
+<p>wrapping the task in an instance of the <strong>std::packaged_task&lt;&gt;</strong> class template or by writing code to explicitly set the values using the <strong>std::promise&lt;&gt;</strong> class template.</p>
+<p>当std::packaged_task&lt;&gt; 对象被invoke的时候，它call对应的function or callable object，让future ready. Can be used as a building block for thread pools</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span>std<span style="color:#f92672">::</span>mutex m;
+</span></span><span style="display:flex;"><span>std<span style="color:#f92672">::</span>deque<span style="color:#f92672">&lt;</span>std<span style="color:#f92672">::</span>packaged_task<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">void</span>()<span style="color:#f92672">&gt;&gt;</span> tasks;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">bool</span> <span style="color:#a6e22e">gui_shutdown_message_received</span>();
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">get_and_process_gui_message</span>();
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">gui_thread</span>() {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">while</span> (<span style="color:#f92672">!</span>gui_shutdown_message_received()) {
+</span></span><span style="display:flex;"><span>    get_and_process_gui_message();
+</span></span><span style="display:flex;"><span>    std<span style="color:#f92672">::</span>packaged_task<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">void</span>()<span style="color:#f92672">&gt;</span> task;
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>      std<span style="color:#f92672">::</span>lock_guard<span style="color:#f92672">&lt;</span>std<span style="color:#f92672">::</span>mutex<span style="color:#f92672">&gt;</span> lk(m);
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">if</span> (tasks.empty())
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">continue</span>;
+</span></span><span style="display:flex;"><span>      task <span style="color:#f92672">=</span> std<span style="color:#f92672">::</span>move(tasks.front());
+</span></span><span style="display:flex;"><span>      tasks.pop_front();
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>    task();
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>std<span style="color:#f92672">::</span><span style="color:#66d9ef">thread</span> gui_bg_thread(gui_thread);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">template</span> <span style="color:#f92672">&lt;</span><span style="color:#66d9ef">typename</span> Func<span style="color:#f92672">&gt;</span> std<span style="color:#f92672">::</span>future<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">void</span><span style="color:#f92672">&gt;</span> post_task_for_gui_thread(Func f) {
+</span></span><span style="display:flex;"><span>  std<span style="color:#f92672">::</span>packaged_task<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">void</span>()<span style="color:#f92672">&gt;</span> task(f);
+</span></span><span style="display:flex;"><span>  std<span style="color:#f92672">::</span>future<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">void</span><span style="color:#f92672">&gt;</span> res <span style="color:#f92672">=</span> task.get_future();
+</span></span><span style="display:flex;"><span>  std<span style="color:#f92672">::</span>lock_guard<span style="color:#f92672">&lt;</span>std<span style="color:#f92672">::</span>mutex<span style="color:#f92672">&gt;</span> lk(m);
+</span></span><span style="display:flex;"><span>  tasks.push_back(std<span style="color:#f92672">::</span>move(task));
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">return</span> res;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>std::packaged_task wraps a function or other callable object</p>
+<h3 id="promises">promises</h3>
+<p>tasks that can’t be expressed as a simple function call or those tasks where the result may come from more than one place, 第三种创建future的方式：std::promise</p>
+<p>std::promise/std::future pair：通过std::promise的get_future()成员函数获得std::future object。std::promise<!-- raw HTML omitted --> 通过set_value()设置value让 std::future<!-- raw HTML omitted --> object ready,future object就可以读到。</p>
+<p>如果destroy the std::promise without setting a value： exception</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">void</span> <span style="color:#a6e22e">process_connections</span>(connection_set <span style="color:#f92672">&amp;</span>connections) {
+</span></span><span style="display:flex;"><span>  <span style="color:#66d9ef">while</span> (<span style="color:#f92672">!</span>done(connections)) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> (connection_iterator connection <span style="color:#f92672">=</span> connections.begin(),
+</span></span><span style="display:flex;"><span>                             end <span style="color:#f92672">=</span> connections.end();
+</span></span><span style="display:flex;"><span>         connection <span style="color:#f92672">!=</span> end; <span style="color:#f92672">++</span>connection) {
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">if</span> (connection<span style="color:#f92672">-&gt;</span>has_incoming_data()) {
+</span></span><span style="display:flex;"><span>        data_packet data <span style="color:#f92672">=</span> connection<span style="color:#f92672">-&gt;</span>incoming();
+</span></span><span style="display:flex;"><span>        std<span style="color:#f92672">::</span>promise<span style="color:#f92672">&lt;</span>payload_type<span style="color:#f92672">&gt;</span> <span style="color:#f92672">&amp;</span>p <span style="color:#f92672">=</span> connection<span style="color:#f92672">-&gt;</span>get_promise(data.id);
+</span></span><span style="display:flex;"><span>        p.set_value(data.payload);
+</span></span><span style="display:flex;"><span>      }
+</span></span><span style="display:flex;"><span>      <span style="color:#66d9ef">if</span> (connection<span style="color:#f92672">-&gt;</span>has_outgoing_data()) {
+</span></span><span style="display:flex;"><span>        outgoing_packet data <span style="color:#f92672">=</span> connection<span style="color:#f92672">-&gt;</span>top_of_outgoing_queue();
+</span></span><span style="display:flex;"><span>        connection<span style="color:#f92672">-&gt;</span>send(data.payload);
+</span></span><span style="display:flex;"><span>        data.promise.set_value(true);
+</span></span><span style="display:flex;"><span>      }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>  }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="saving-an-exception-for-the-future">Saving an exception for the future</h3>
+<p>future.get() 会返回异常而不是value 当发生异常的时候</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">extern</span> std<span style="color:#f92672">::</span>promise<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">double</span><span style="color:#f92672">&gt;</span> some_promise;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">try</span> {
+</span></span><span style="display:flex;"><span>  some_promise.set_value(calculate_value());
+</span></span><span style="display:flex;"><span>} <span style="color:#66d9ef">catch</span> (...) {
+</span></span><span style="display:flex;"><span>  some_promise.set_exception(std<span style="color:#f92672">::</span>current_exception());
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 如果知道type of the exception，最好用这个而不是try catch
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>some_promise.set_exception(std<span style="color:#f92672">::</span>make_exception_ptr(std<span style="color:#f92672">::</span>logic_error(<span style="color:#e6db74">&#34;foo &#34;</span>)));
+</span></span></code></pre></div><h3 id="waiting-from-multiple-threads">Waiting from multiple threads</h3>
+<p>用std::shared_future, multiple threads can wait for the same event</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#75715e">// implicit transfer of ownership
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>std<span style="color:#f92672">::</span>shared_future<span style="color:#f92672">&lt;</span>std<span style="color:#f92672">::</span>string<span style="color:#f92672">&gt;</span> sf(some_promise.get_future());
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// share() 方法将future变为shared_future
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">auto</span> sf <span style="color:#f92672">=</span> p.get_future().share();
+</span></span></code></pre></div><h2 id="waiting-with-a-time-limit">Waiting with a time limit</h2>
+<h1 id="memory-order-and-atomic">memory order and atomic</h1>
+<p>memory order是线程之间进行顺序绑定用的。</p>
+<p>release sequence 指一个release 可以和后面的很多个acquire 同步</p>
+<p>如果acquire操作看见release fence后面的store的结果，那fence就和acquire同步；如果acquire fence后面的load看见release操作的结果，那release和fence同步。</p>
+<p>Release fence可以防止fence前的内存操作重排到fence后的任意store之后，即阻止loadstore重排和storestore重排。</p>
+<p>acquire fence可以防止fence后的内存操作重排到fence前的任意load之前，即阻止loadload重排和loadstore重排</p>
+<p>std::atomic_thread_fence(memory_order_acq_rel)和std::atomic_thread_fence(memory_order_seq_cst)都是full fence。</p>
+<p>基于atomic_thread_fence（外加一个任意序的原子变量操作）的同步和基于原子操作的同步很类似，比如最常用的，都可以形成release acquire语义，但是从上面的描述可以看出，fence的效果要比基于原子变量的效果更强，在weak memory order平台的开销也更大。</p>
+<p>以release为例，对于基于原子变量的release opration，仅仅是阻止前面的内存操作重排到该release opration之后，而release fence则是阻止重排到fence之后的任意store operation之后。</p>
+<p>因为fence的同步效果和原子操作上的同步效果比较相似，可以互相组合，自然的，使用fence的同步会有三种情况， fence - atomic同步，fence - fence同步和atomic-fence -同步。</p>
+<p>If a non-atomic operation is sequenced before an atomic operation, and that atomic operation happens before an operation in another thread, the non-atomic operation also happens before that operation in the other thread. 参考代码：5.3.6的 listing5.13
+所以mutex的实现的基础就是这个：lock（）是acquire，unlock是release，所以unlock之前的操作在unlock之前，也就在下一个thread的lock之前。</p>
+<p>原子变量实现自旋锁：https://blog.51cto.com/quantfabric/2581173 相比mutex，是busy waiting而不是sleep waiting，不会使线程阻塞；少了用户态内核态的切换。</p>
+<p>无锁编程性能并不一定更好，比如cache受影响。</p>
+<p>原子变量的底层实现可能会使用mutex。</p>
+</section>
+
+  
+  
+
+  
+  
+  
+  
+  <nav class="mt-24 flex rounded-lg bg-black/[3%] text-lg dark:bg-white/[8%]">
+    
+    <a
+      class="flex w-1/2 items-center rounded-l-md p-6 pr-3 font-semibold no-underline hover:bg-black/[2%] dark:hover:bg-white/[3%]"
+      href="http://localhost:1313/posts/react/"
+      ><span class="mr-1.5">←</span><span>React</span></a
+    >
+    
+    
+    <a
+      class="ml-auto flex w-1/2 items-center justify-end rounded-r-md p-6 pl-3 font-semibold no-underline hover:bg-black/[2%] dark:hover:bg-white/[3%]"
+      href="http://localhost:1313/posts/map-reduce/"
+      ><span>Map Reduce 的实现</span><span class="ml-1.5">→</span></a
+    >
+    
+  </nav>
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+</article>
+
+
+    </main>
+
+    <footer
+  class="opaco mx-auto flex h-[4.5rem] max-w-3xl items-center px-8 text-[0.9em] opacity-60"
+>
+  <div class="mr-auto">
+    &copy; 2024
+    <a class="link" href="http://localhost:1313/">greathongtu 的 Blog</a>
+  </div>
+  <a class="link mx-6" href="https://gohugo.io/" rel="noopener" target="_blank"
+    >Powered by Hugo️️</a
+  >️
+  <a
+    class="link"
+    href="https://github.com/nanxiaobei/hugo-paper"
+    rel="noopener"
+    target="_blank"
+    >✎ Paper</a
+  >
+</footer>
+
+  </body>
+</html>

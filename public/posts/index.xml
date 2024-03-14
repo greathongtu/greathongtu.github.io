@@ -1,28 +1,68 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>Posts on My New Hugo Site</title>
-    <link>https://example.org/posts/</link>
-    <description>Recent content in Posts on My New Hugo Site</description>
+    <title>Posts on greathongtu 的 Blog</title>
+    <link>http://localhost:1313/posts/</link>
+    <description>Recent content in Posts on greathongtu 的 Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 15 Nov 2023 22:41:25 +0800</lastBuildDate>
-    <atom:link href="https://example.org/posts/index.xml" rel="self" type="application/rss+xml" />
+    <lastBuildDate>Thu, 14 Mar 2024 19:42:12 +0800</lastBuildDate>
+    <atom:link href="http://localhost:1313/posts/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>Second</title>
-      <link>https://example.org/posts/second/</link>
-      <pubDate>Wed, 15 Nov 2023 22:41:25 +0800</pubDate>
-      <guid>https://example.org/posts/second/</guid>
-      <description>Second One hello, this is second!
-can you see the content?</description>
+      <title>React</title>
+      <link>http://localhost:1313/posts/react/</link>
+      <pubDate>Thu, 14 Mar 2024 19:42:12 +0800</pubDate>
+      <guid>http://localhost:1313/posts/react/</guid>
+      <description> jsx：component返回的jsx，看起来像html，实际是javascript，通过babel将jsx编译成javascript，这些js最后通过dom操作生产html。jsx融合了html，css，js三个。 props：是属性，是上级component向下级component传递的只读的信息 state：使用useState()返回一个初始值v和一个function setV。useState是一个react Hook。根据当前state更新新的state需要用lambda function UI = 很多components = f(state) Npx create-react-app@5 travel-list 运行：npm start </description>
     </item>
     <item>
-      <title>My First Post</title>
-      <link>https://example.org/posts/my-first-post/</link>
-      <pubDate>Wed, 15 Nov 2023 22:21:08 +0800</pubDate>
-      <guid>https://example.org/posts/my-first-post/</guid>
-      <description>Hello println!(&amp;#34;helo&amp;#34;); fn out() -&amp;gt; String { &amp;#34;df&amp;#34;.into() } this is the content in the first blog.
-df </description>
+      <title>Cpp Concurrency</title>
+      <link>http://localhost:1313/posts/cpp-concurrency/</link>
+      <pubDate>Fri, 08 Dec 2023 14:52:36 +0800</pubDate>
+      <guid>http://localhost:1313/posts/cpp-concurrency/</guid>
+      <description>#include &amp;lt;iostream&amp;gt; #include &amp;lt;thread&amp;gt; void hello() { std::cout &amp;lt;&amp;lt; &amp;#34;Hello Concurrent World\n&amp;#34;; } int main() { std::cout &amp;lt;&amp;lt; &amp;#34;first main&amp;#34; &amp;lt;&amp;lt; std::endl; std::thread t(hello); std::cout &amp;lt;&amp;lt; &amp;#34;from main thread!&amp;#34; &amp;lt;&amp;lt; std::endl; // t.join(); t.detach(); } 等待：join&#xA;不等：detach 如后台监控线程&#xA;精细化控制： condition variables and futures&#xA;join之前发生exception怎么办呢：try catch. 更好的方式：RAII&#xA;class thread_guard { std::thread &amp;amp;t; public: explicit thread_guard(std::thread &amp;amp;t_) : t(std::move(t_)) { if (!t.joinable()) { throw std::logic_error(“No thread”); } } ~thread_guard() { t.join(); } thread_guard(thread_guard const &amp;amp;) = delete; thread_guard &amp;amp;operator=(thread_guard const &amp;amp;) = delete; }; // usage std::thread t(my_func); thread_guard g(t); 向thread对象传参的时候要注意隐式类型转换：</description>
+    </item>
+    <item>
+      <title>Map Reduce 的实现</title>
+      <link>http://localhost:1313/posts/map-reduce/</link>
+      <pubDate>Fri, 01 Dec 2023 20:24:26 +0800</pubDate>
+      <guid>http://localhost:1313/posts/map-reduce/</guid>
+      <description>数据结构设计 状态都存在 Coordinator 中， Worker 无状态&#xA;Task 结构 每次 Worker 向 Coordinator 请求 Task,&#xA;type Task struct { Input string // Map 阶段的输入文件名 TaskPhase Phase // Worker眼中的阶段： Map/Reduce/Exit/Wait NReduce int // Reduce 的数量 Index int // 该 Task 在 Coordinator中的索引 Intermediates []string // Map生成的中间文件名 Output string // Reduce 生成的最终输出文件名 } Coordinator type Coordinator struct { TaskQueue chan *Task // 待处理的 Task 队列 TaskMetadatas map[int]*TaskMetadata // Coordinator 维护的 Task 元数据 Phase Phase // Coordinator 处于哪个阶段： Map/Reduce/Exit/Wait NReduce int InputFiles []string // Map 阶段的输入文件名 Intermediates [][]string mutex sync.</description>
+    </item>
+    <item>
+      <title>Go 探究</title>
+      <link>http://localhost:1313/posts/go-design/</link>
+      <pubDate>Sun, 19 Nov 2023 01:29:52 +0800</pubDate>
+      <guid>http://localhost:1313/posts/go-design/</guid>
+      <description>数组 如果数组中元素的个数小于或者等于 4 个，那么所有的变量会直接在栈上初始化，如果数组元素大于 4 个，变量就会在静态存储区初始化然后拷贝到栈上。 为什么？&#xA;slice []int []interface{} 切片提供了对数组中部分连续片段的引用，而作为数组的引用，我们可以在运行区间可以修改它的长度和范围。当切片底层的数组长度不足时就会触发扩容，切片指向的数组可能会发生变化，不过在上层看来切片是没有变化的，上层只需要与切片打交道不需要关心数组的变化。&#xA;追加和扩容 先确定切片大致容量 如果期望容量大于当前容量的两倍就会使用期望容量； 如果当前切片的长度小于 1024 就会将容量翻倍； 如果当前切片的长度大于 1024 就会每次增加 25% 的容量，直到新容量大于期望容量； 再根据切片中的元素大小对齐内存 切片拷贝 无论是编译期间拷贝还是运行时拷贝，两种拷贝方式都会通过 runtime.memmove 将整块内存的内容拷贝到目标的内存区域中： 大切片扩容或者复制时可能会发生大规模的内存拷贝，要注意。&#xA;map type hmap struct { count int flags uint8 B uint8 noverflow uint16 hash0 uint32 buckets unsafe.Pointer oldbuckets unsafe.Pointer nevacuate uintptr extra *mapextra } type mapextra struct { overflow *[]*bmap oldoverflow *[]*bmap nextOverflow *bmap } count 表示当前哈希表中的元素数量； B 表示当前哈希表持有的 buckets 数量，但是因为哈希表中桶的数量都 2 的倍数，所以该字段会存储对数，也就是 len(buckets) == 2^B； hash0 是哈希的种子，它能为哈希函数的结果引入随机性，这个值在创建哈希表时确定，并在调用哈希函数时作为参数传入； oldbuckets 是哈希在扩容时用于保存之前 buckets 的字段，它的大小是当前 buckets 的一半； 如上图所示哈希表 runtime.</description>
+    </item>
+    <item>
+      <title>sql 总结</title>
+      <link>http://localhost:1313/posts/sql-summary/</link>
+      <pubDate>Fri, 17 Nov 2023 01:12:44 +0800</pubDate>
+      <guid>http://localhost:1313/posts/sql-summary/</guid>
+      <description>mysql 执行流程 SQL语句 - 查询缓存 - 解析器（语法分析 语意分析） - 优化器（逻辑优化 物理优化） - 执行器&#xA;为什么说 B+ 树查找行记录，最多只需1~3次磁盘IO InnoDB 中页大小为16KB，一个键值对大概 8B+8B， 也就是一个页可以存1K个 KV pair，1K约等于1000个。 所以深度为3的 b+ 树索引可以维护 10^3 * 10^3 * 10^3 = 10 亿条记录。 正常每个节点不可能都填满了，所以一般 b+ 树高度在2到4 层。根节点在内存内，所以一般查找某一 KV 的行记录时只需1到3次磁盘IO&#xA;InnoDB 关键特性 Insert Buffer 升级为 Change Buffer 对于非聚集索引的插入或更新操作，不是每次直接插入到索引页，而是先判断插入的非聚集索引页是否在缓冲池中，若在则直接插入；若不在，则先放入一个 Insert Buffer 对象中，然后再以一定的频率和情况进行 Insert Buffer 和辅助索引页子节点的 merge 操作。如此一来多个插入合并到一个操作中（因为在一个索引页中）。 条件： 1. 索引是辅助索引； 2. 索引不是唯一的。 Insert Buffer 是一个 B+ 树 Double Write Adaptive Hash Index Async IO Flush Neighbor Page 覆盖索引 覆盖索引（covering index ，或称为索引覆盖）即从非主键索引中就能查到的记录，而不需要查询主键索引中的记录，避免了回表的产生减少了树的搜索次数，显著提升性能</description>
+    </item>
+    <item>
+      <title>Linux 网络I/O复用并发模型</title>
+      <link>http://localhost:1313/posts/linux-io/</link>
+      <pubDate>Fri, 17 Nov 2023 01:04:58 +0800</pubDate>
+      <guid>http://localhost:1313/posts/linux-io/</guid>
+      <description>阻塞非阻塞 阻塞占用资源少，但是一个线程通过阻塞IO，只能处理一个请求。 非阻塞需要一直轮询，占用CPU资源大。&#xA;解决方法一：阻塞+多线程/多进程。 浪费资源 解决方法二：非阻塞忙轮询 while(true) { for i in 流[] { if(i has data) { read/ other process } } } 方法三：IO多路复用：既能阻塞等待，不浪费CPU资源，也能同一时刻监听多个IO请求的状态 select: while(true) { select(流[]); // 阻塞 max 1024个 for i in 流[] { if(i has data) { read/ other process } } } epoll:&#xA;while(true) { 可处理的流 = epoll_wait(epoll_fd);// 阻塞 max `cat /proc/sys/fs/file-max` 个 for i in 可处理的流[] { read/ other process } } select/ poll select 实现多路复用的方式是，将已连接的 Socket 都放到一个文件描述符集合，然后调用 select 函数将文件描述符集合拷贝到内核里，让内核来检查是否有网络事件产生，检查的方式很粗暴，就是通过遍历文件描述符集合的方式，当检查到有事件产生后，将此 Socket 标记为可读或可写， 接着再把整个文件描述符集合拷贝回用户态里，然后用户态还需要再通过遍历的方法找到可读或可写的 Socket，然后再对其处理。</description>
+    </item>
+    <item>
+      <title>wsl 代理问题</title>
+      <link>http://localhost:1313/posts/wsl-network/</link>
+      <pubDate>Fri, 17 Nov 2023 00:41:53 +0800</pubDate>
+      <guid>http://localhost:1313/posts/wsl-network/</guid>
+      <description>问题 win11 使用 vs code 连接 wsl 的时候，一些 vs code 的拓展无法连接网络，报错： Failed to establish a socket connection to proxies: [&amp;quot;PROXY 127.0.0.1:7890&amp;quot;]&#xA;或者 go build 因为网络问题无法继续。&#xA;原因 Windows 开启 Clash 之后，Windows 系统代理一般被设置为 127.0.0.1:7890，VS Code 会继承这个代理设置，wsl 中的 vscode-server 也继承了这个代理设置。但是 wsl 在 127.0.0.1:7890 上并没有代理服务，导致 vscode-server 联网失败。所以 wsl 中正确设置 “http_proxy” 和 “https_proxy” 环境变量可以解决问题。&#xA;解决办法 在 wsl 中正确设置 path # ~/.bashrc # 获取 Host IP WINDOWS_IP=$(ip route | grep default | awk &amp;#39;{print $3}&amp;#39;) PROXY_HTTP=&amp;#34;http://${WINDOWS_IP}:7890&amp;#34; # 设置环境变量 export http_proxy=&amp;#34;${PROXY_HTTP}&amp;#34; export https_proxy=&amp;#34;${PROXY_HTTP}&amp;#34; # ~/.</description>
+    </item>
+    <item>
+      <title>Vim 进阶</title>
+      <link>http://localhost:1313/posts/vim/</link>
+      <pubDate>Thu, 16 Nov 2023 14:39:47 +0800</pubDate>
+      <guid>http://localhost:1313/posts/vim/</guid>
+      <description>Repeat using . and ; // use &amp;#39; to revert ;, u to revert . var foo = &amp;#34;method(&amp;#34;+argument1+&amp;#34;,&amp;#34;+argument2+&amp;#34;)&amp;#34;; f+ to Move, s&amp;lt;space&amp;gt;+&amp;lt;space&amp;gt;&amp;lt;Esc&amp;gt; to Change. use ; to repeat search and . to repeat change var foo = &amp;#34;method(&amp;#34; + argument1 + &amp;#34;,&amp;#34; + argument2 + &amp;#34;)&amp;#34;; Dot Formula The Ideal:&#xA;one keystroke to Move, one keystroke to Execute. Act, Repeat, Reverse Operator + Motion = Action (dw、guaw、gcap) Misc 如何在每行的最后加上分号？ 先A; 然后就可以重复j.</description>
     </item>
   </channel>
 </rss>

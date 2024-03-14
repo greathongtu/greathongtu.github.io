@@ -1,0 +1,438 @@
+<!doctype html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html
+  class="not-ready lg:text-base"
+  style="--bg: #faf8f1"
+  lang="en-us"
+>
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, shrink-to-fit=no"
+  />
+
+  
+  <title>Linux 网络I/O复用并发模型 - greathongtu 的 Blog</title>
+
+  
+  <meta name="theme-color" />
+
+  
+  
+  
+  
+  <meta name="description" content="阻塞非阻塞 阻塞占用资源少，但是一个线程通过阻塞IO，只能处理一个请求。 非阻塞需要一直轮询，占用CPU资源大。
+解决方法一：阻塞&#43;多线程/多进程。 浪费资源 解决方法二：非阻塞忙轮询 while(true) { for i in 流[] { if(i has data) { read/ other process } } } 方法三：IO多路复用：既能阻塞等待，不浪费CPU资源，也能同一时刻监听多个IO请求的状态 select: while(true) { select(流[]); // 阻塞 max 1024个 for i in 流[] { if(i has data) { read/ other process } } } epoll:
+while(true) { 可处理的流 = epoll_wait(epoll_fd);// 阻塞 max `cat /proc/sys/fs/file-max` 个 for i in 可处理的流[] { read/ other process } } select/ poll select 实现多路复用的方式是，将已连接的 Socket 都放到一个文件描述符集合，然后调用 select 函数将文件描述符集合拷贝到内核里，让内核来检查是否有网络事件产生，检查的方式很粗暴，就是通过遍历文件描述符集合的方式，当检查到有事件产生后，将此 Socket 标记为可读或可写， 接着再把整个文件描述符集合拷贝回用户态里，然后用户态还需要再通过遍历的方法找到可读或可写的 Socket，然后再对其处理。" />
+  <meta name="author" content="greathongtu 的 Blog" />
+  
+
+  
+  
+  
+  
+  
+  
+  <link rel="preload stylesheet" as="style" href="http://localhost:1313/main.min.css" />
+
+  
+  
+  
+  
+  
+  <link rel="preload" as="image" href="http://localhost:1313/theme.png" />
+
+  
+  
+  
+  
+  
+
+  
+  
+  <link rel="preload" as="image" href="http://localhost:1313/github.svg" />
+  
+  
+
+  
+  
+  <script
+    defer
+    src="http://localhost:1313/highlight.min.js"
+    onload="hljs.initHighlightingOnLoad();"
+  ></script>
+  
+
+  
+  
+  
+
+  
+  <link rel="icon" href="http://localhost:1313/favicon.ico" />
+  <link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png" />
+
+  
+  <meta name="generator" content="Hugo 0.123.8">
+
+  
+  
+  
+</head>
+
+  <body class="text-black duration-200 ease-out dark:text-white">
+    <header class="mx-auto flex h-[4.5rem] max-w-3xl px-8 lg:justify-center">
+  <div class="relative z-50 mr-auto flex items-center">
+    <a
+      class="-translate-x-[1px] -translate-y-[1px] text-2xl font-semibold"
+      href="http://localhost:1313/"
+      >greathongtu 的 Blog</a
+    >
+    <div
+      class="btn-dark text-[0] ml-4 h-6 w-6 shrink-0 cursor-pointer [background:url(./theme.png)_left_center/_auto_theme('spacing.6')_no-repeat] [transition:_background-position_0.4s_steps(5)] dark:[background-position:right]"
+      role="button"
+      aria-label="Dark"
+    ></div>
+  </div>
+
+  <div
+    class="btn-menu relative z-50 -mr-8 flex h-[4.5rem] w-[5rem] shrink-0 cursor-pointer flex-col items-center justify-center gap-2.5 lg:hidden"
+    role="button"
+    aria-label="Menu"
+  ></div>
+
+  
+
+  <script>
+    
+    const htmlClass = document.documentElement.classList;
+    setTimeout(() => {
+      htmlClass.remove('not-ready');
+    }, 10);
+
+    
+    const btnMenu = document.querySelector('.btn-menu');
+    btnMenu.addEventListener('click', () => {
+      htmlClass.toggle('open');
+    });
+
+    
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    const lightBg = '#faf8f1'.replace(/"/g, '');
+    const setDark = (isDark) => {
+      metaTheme.setAttribute('content', isDark ? '#000' : lightBg);
+      htmlClass[isDark ? 'add' : 'remove']('dark');
+      localStorage.setItem('dark', isDark);
+    };
+
+    
+    const darkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+    if (htmlClass.contains('dark')) {
+      setDark(true);
+    } else {
+      const darkVal = localStorage.getItem('dark');
+      setDark(darkVal ? darkVal === 'true' : darkScheme.matches);
+    }
+
+    
+    darkScheme.addEventListener('change', (event) => {
+      setDark(event.matches);
+    });
+
+    
+    const btnDark = document.querySelector('.btn-dark');
+    btnDark.addEventListener('click', () => {
+      setDark(localStorage.getItem('dark') !== 'true');
+    });
+  </script>
+
+  <div
+    class="nav-wrapper fixed inset-x-0 top-full z-40 flex h-full select-none flex-col justify-center pb-16 duration-200 dark:bg-black lg:static lg:h-auto lg:flex-row lg:!bg-transparent lg:pb-0 lg:transition-none"
+  >
+    
+    
+
+    
+    <nav
+      class="mt-12 flex justify-center space-x-10 dark:invert lg:ml-12 lg:mt-0 lg:items-center lg:space-x-6"
+    >
+      
+      <a
+        class="h-8 w-8 text-[0] [background:var(--url)_center_center/cover_no-repeat] lg:h-6 lg:w-6"
+        style="--url: url(./github.svg)"
+        href="https://github.com/greathongtu"
+        target="_blank"
+        rel="me"
+      >
+        github
+      </a>
+      
+    </nav>
+    
+  </div>
+</header>
+
+
+    <main
+      class="prose prose-neutral relative mx-auto min-h-[calc(100%-9rem)] max-w-3xl px-8 pb-16 pt-12 dark:prose-invert"
+    >
+      
+
+<article>
+  <header class="mb-16">
+    <h1 class="!my-0 pb-2.5">Linux 网络I/O复用并发模型</h1>
+
+    
+    <div class="text-sm antialiased opacity-60">
+      
+      <time>Nov 17, 2023</time>
+      
+      
+      
+      
+    </div>
+    
+  </header>
+
+  <section><h1 id="阻塞非阻塞">阻塞非阻塞</h1>
+<p>阻塞占用资源少，但是一个线程通过阻塞IO，只能处理一个请求。
+非阻塞需要一直轮询，占用CPU资源大。</p>
+<ul>
+<li>解决方法一：阻塞+多线程/多进程。 浪费资源</li>
+<li>解决方法二：非阻塞忙轮询</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">while</span>(true) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span> i in <span style="color:#960050;background-color:#1e0010">流</span>[] {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span>(i has data) {
+</span></span><span style="display:flex;"><span>            read<span style="color:#f92672">/</span> other process
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><ul>
+<li>方法三：IO多路复用：既能阻塞等待，不浪费CPU资源，也能同一时刻监听多个IO请求的状态
+select:</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">while</span>(true) {
+</span></span><span style="display:flex;"><span>    select(<span style="color:#960050;background-color:#1e0010">流</span>[]); <span style="color:#75715e">// 阻塞 max 1024个
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">for</span> i in <span style="color:#960050;background-color:#1e0010">流</span>[] {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span>(i has data) {
+</span></span><span style="display:flex;"><span>            read<span style="color:#f92672">/</span> other process
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>epoll:</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">while</span>(true) {
+</span></span><span style="display:flex;"><span>    <span style="color:#960050;background-color:#1e0010">可处理的流</span> <span style="color:#f92672">=</span> epoll_wait(epoll_fd);<span style="color:#75715e">// 阻塞 max `cat /proc/sys/fs/file-max` 个
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">for</span> i in <span style="color:#960050;background-color:#1e0010">可处理的流</span>[] {
+</span></span><span style="display:flex;"><span>        read<span style="color:#f92672">/</span> other process
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="select-poll">select/ poll</h2>
+<p>select 实现多路复用的方式是，将已连接的 Socket 都放到一个文件描述符集合，然后调用 select 函数将文件描述符集合拷贝到内核里，让内核来检查是否有网络事件产生，检查的方式很粗暴，就是通过遍历文件描述符集合的方式，当检查到有事件产生后，将此 Socket 标记为可读或可写， 接着再把整个文件描述符集合拷贝回用户态里，然后用户态还需要再通过遍历的方法找到可读或可写的 Socket，然后再对其处理。</p>
+<p>所以，对于 select 这种方式，需要进行 2 次「遍历」文件描述符集合，一次是在内核态里，一个次是在用户态里 ，而且还会发生 2 次「拷贝」文件描述符集合，先从用户空间传入内核空间，由内核修改后，再传出到用户空间中。</p>
+<h2 id="epoll">epoll</h2>
+<p>第一点，epoll 在内核里使用红黑树来跟踪进程所有待检测的文件描述字，把需要监控的 socket 通过 epoll_ctl() 函数加入内核中的红黑树里，红黑树是个高效的数据结构，增删改一般时间复杂度是 O(logn)。而 select/poll 内核里没有类似 epoll 红黑树这种保存所有待检测的 socket 的数据结构，所以 select/poll 每次操作时都传入整个 socket 集合给内核，而 epoll 因为在内核维护了红黑树，可以保存所有待检测的 socket ，所以只需要传入一个待检测的 socket，减少了内核和用户空间大量的数据拷贝和内存分配。</p>
+<p>第二点， epoll 使用事件驱动的机制，内核里维护了一个链表来记录就绪事件，当某个 socket 有事件发生时，通过回调函数内核会将其加入到这个就绪事件列表中，当用户调用 epoll_wait() 函数时，只会返回有事件发生的文件描述符的个数，不需要像 select/poll 那样轮询扫描整个 socket 集合，大大提高了检测的效率。</p>
+<h2 id="epoll-api">epoll API</h2>
+<ol>
+<li>创建epoll，在内核创建一颗红黑树</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#75715e">// @param size 告诉内核监听的数目
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// @returns 返回一个epoll句柄（fd）
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">epoll_create</span>(<span style="color:#66d9ef">int</span> size);
+</span></span></code></pre></div><ol start="2">
+<li>控制epoll，在红黑树上crud</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#75715e">// @param op: EPOLL_CTL_ADD; EPOLL_CTL_MOD; EPOLL_CTL_DEL
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// @param event 常见的有EPOLLIN; EPOLLOUT
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// @returns 成功返回0，失败-1，errno查看错误信息
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">epoll_ctl</span>(<span style="color:#66d9ef">int</span> epfd, <span style="color:#66d9ef">int</span> op, <span style="color:#66d9ef">int</span> fd, <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">epoll_event</span> <span style="color:#f92672">*</span>event);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// example：
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">epoll_event</span> new_event;
+</span></span><span style="display:flex;"><span>new_event.events <span style="color:#f92672">=</span> EPOLLIN <span style="color:#f92672">|</span> EPOLLOUT;
+</span></span><span style="display:flex;"><span>new_event.data.fd <span style="color:#f92672">=</span> <span style="color:#ae81ff">5</span>;
+</span></span><span style="display:flex;"><span>epoll_ctl(epfd, EPOLL_CTL_ADD, <span style="color:#ae81ff">5</span>, <span style="color:#f92672">&amp;</span>new_event);
+</span></span></code></pre></div><ol start="3">
+<li>等待epoll，触发阻塞</li>
+</ol>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#75715e">// @param event 从内核得到的事件集合
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// @param maxevents 告知内核这个events有多大
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">int</span> <span style="color:#a6e22e">epoll_wait</span>(<span style="color:#66d9ef">int</span> epfd, <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">epoll_event</span> <span style="color:#f92672">*</span>event, <span style="color:#66d9ef">int</span> maxevents, <span style="color:#66d9ef">int</span> timeout);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// example:
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">epoll_event</span> my_event[<span style="color:#ae81ff">1000</span>];
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">int</span> event_cnt <span style="color:#f92672">=</span> epoll_wait(epfd, my_event, <span style="color:#ae81ff">1000</span>, <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>);
+</span></span></code></pre></div><p>epoll 编程框架</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-cpp" data-lang="cpp"><span style="display:flex;"><span><span style="color:#66d9ef">int</span> epfd <span style="color:#f92672">=</span> epoll_create(<span style="color:#ae81ff">1000</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>epoll_ctl(epfd, EPOLL_CTL_ADD, listen_fd, <span style="color:#f92672">&amp;</span>listen_event);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">while</span>(<span style="color:#ae81ff">1</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">int</span> active_cnt <span style="color:#f92672">=</span> epoll_wait(epfd, events, <span style="color:#ae81ff">1000</span>, <span style="color:#f92672">-</span><span style="color:#ae81ff">1</span>);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">for</span>(<span style="color:#66d9ef">int</span> i<span style="color:#f92672">=</span><span style="color:#ae81ff">0</span>; i<span style="color:#f92672">&lt;</span>active_cnt; i<span style="color:#f92672">++</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span>(events[i].data.fd <span style="color:#f92672">==</span> listen_fd) {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// accept 三次握手。并且将新accept的fd 加进epoll
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        } <span style="color:#66d9ef">else</span> <span style="color:#a6e22e">if</span>(events[i].events <span style="color:#f92672">&amp;</span> EPOLLIN) {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 对此fd 进行读操作
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        } <span style="color:#66d9ef">else</span> <span style="color:#a6e22e">if</span>(events[i].events <span style="color:#f92672">&amp;</span> EPOLLOUT) {
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// 对此fd 进行写操作
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        } 
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h3 id="水平触发lt边缘触发et">水平触发LT边缘触发ET</h3>
+<p>LT：只要用户不处理就一直把这些事件返回，涉及到内核态到用户态的拷贝，上下文的转换，稳定但消耗大。
+ET：只把事件返回一次，性能高。
+类似TCP/UDP 可靠重传</p>
+<h1 id="常见多路io复用并发模型">常见多路IO复用并发模型</h1>
+<h2 id="模型一-单线程accept">模型一 单线程Accept</h2>
+<p>Server:</p>
+<ol>
+<li>create ListenFd</li>
+<li>Bind + Listen</li>
+<li>Accept(ListenFd) // 这里会阻塞</li>
+<li>Read + Write</li>
+</ol>
+<p>Client:</p>
+<ol>
+<li>Connect</li>
+<li>Read + Write</li>
+</ol>
+<p>缺点：其他client会阻塞。非并发。</p>
+<h2 id="模型二-单线程accept--多线程读写业务无io复用">模型二 单线程Accept + 多线程读写业务（无I/O复用）</h2>
+<p>Server：
+Accept 之后创建新thread进行读写，主线程只Accept</p>
+<p>缺点：要的线程太多，也会增加CPU切换成本；对于长连接，客户端只要不关闭server就要保持这个链接的状态，占用连接资源和线程的开销。</p>
+<h2 id="模型三-单线程多路io复用">模型三 单线程多路I/O复用</h2>
+<p>Server:</p>
+<ol>
+<li>create ListenFd</li>
+<li>Bind + Listen</li>
+<li>多路I/O复用：创建 ListenFd 并监听。有Client1 Connect 请求，检测到ListenFd触发读事件，则进行Accept 建立连接，并将新生成的connFd1加入到监听I/O集合中</li>
+<li>读写的时候不能及时相应新Client的连接请求。</li>
+</ol>
+<p>并发少的时候，消息延迟要求不高，可以采用。</p>
+<h2 id="模型四-单线程多路io复用--多线程业务工作池">模型四 单线程多路I/O复用 + 多线程业务工作池</h2>
+<p>读取数据交给worker pool工作线程池，里面的的线程只处理消息业务，不进行socket读写操作。
+工作池处理完业务，触发connFd写事件，将回执客户端的消息通过main thread写给对方。
+实际上读写的业务并发为1，但是业务流程的并发为worker pool 线程数量。
+缺点：读写依然是main thread单独处理，最高的读写并行通道依然为1；返回给Client依旧需要排队。</p>
+<h2 id="模型五-单线程多路io复用--多线程多路io复用线程池">模型五 单线程多路I/O复用 + 多线程多路I/O复用（线程池）</h2>
+<p>main thread 只用来监听ListenFd 并 Accept，线程池负责ConnFds</p>
+<p>缺点：多个身处同一个Thread的客户端会出现读写延迟现象。</p>
+<h2 id="模型五-单线程多路io复用--多进程多路io复用进程池">模型五 单线程多路I/O复用 + 多进程多路I/O复用（进程池）</h2>
+<p>多进程抢占处理ListenFd事件，进程池中的某个进程进行Accept，然后ConnFd</p>
+<p>多进程内存资源空间占用稍微大一些</p>
+<h1 id="模型六-单线程多路io复用--多线程多路io复用--多线程">模型六 单线程多路I/O复用 + 多线程多路I/O复用 + 多线程</h1>
+<p>线程池中的线程还会继续 new thread。
+过于理想化，需要很多核</p>
+<p>模型五是最合适的</p>
+</section>
+
+  
+  
+  <footer class="mt-12 flex flex-wrap">
+     
+    <a
+      class="mb-1.5 mr-1.5 rounded-lg bg-black/[3%] px-5 py-1.5 no-underline dark:bg-white/[8%]"
+      href="http://localhost:1313/tags/linux"
+      >linux</a
+    >
+     
+    <a
+      class="mb-1.5 mr-1.5 rounded-lg bg-black/[3%] px-5 py-1.5 no-underline dark:bg-white/[8%]"
+      href="http://localhost:1313/tags/io"
+      >io</a
+    >
+    
+  </footer>
+  
+
+  
+  
+  
+  
+  <nav class="mt-24 flex rounded-lg bg-black/[3%] text-lg dark:bg-white/[8%]">
+    
+    <a
+      class="flex w-1/2 items-center rounded-l-md p-6 pr-3 font-semibold no-underline hover:bg-black/[2%] dark:hover:bg-white/[3%]"
+      href="http://localhost:1313/posts/sql-summary/"
+      ><span class="mr-1.5">←</span><span>sql 总结</span></a
+    >
+    
+    
+    <a
+      class="ml-auto flex w-1/2 items-center justify-end rounded-r-md p-6 pl-3 font-semibold no-underline hover:bg-black/[2%] dark:hover:bg-white/[3%]"
+      href="http://localhost:1313/posts/wsl-network/"
+      ><span>wsl 代理问题</span><span class="ml-1.5">→</span></a
+    >
+    
+  </nav>
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+</article>
+
+
+    </main>
+
+    <footer
+  class="opaco mx-auto flex h-[4.5rem] max-w-3xl items-center px-8 text-[0.9em] opacity-60"
+>
+  <div class="mr-auto">
+    &copy; 2024
+    <a class="link" href="http://localhost:1313/">greathongtu 的 Blog</a>
+  </div>
+  <a class="link mx-6" href="https://gohugo.io/" rel="noopener" target="_blank"
+    >Powered by Hugo️️</a
+  >️
+  <a
+    class="link"
+    href="https://github.com/nanxiaobei/hugo-paper"
+    rel="noopener"
+    target="_blank"
+    >✎ Paper</a
+  >
+</footer>
+
+  </body>
+</html>
