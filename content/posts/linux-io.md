@@ -13,7 +13,7 @@ tags = ['linux', 'io']
 * 解决方法二：非阻塞忙轮询
 ```cpp
 while(true) {
-    for i in 流[] {
+    for i in stream[] {
         if(i has data) {
             read/ other process
         }
@@ -24,8 +24,8 @@ while(true) {
 select:
 ```cpp
 while(true) {
-    select(流[]); // 阻塞 max 1024个
-    for i in 流[] {
+    select(stream[]); // 阻塞 max 1024个
+    for i in stream[] {
         if(i has data) {
             read/ other process
         }

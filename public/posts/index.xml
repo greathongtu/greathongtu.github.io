@@ -6,14 +6,21 @@
     <description>Recent content in Posts on greathongtu 的 Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Thu, 14 Mar 2024 19:42:12 +0800</lastBuildDate>
+    <lastBuildDate>Sun, 31 Mar 2024 01:39:55 +0800</lastBuildDate>
     <atom:link href="http://localhost:1313/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Rust Concurrency</title>
+      <link>http://localhost:1313/posts/rust-concurrency/</link>
+      <pubDate>Sun, 31 Mar 2024 01:39:55 +0800</pubDate>
+      <guid>http://localhost:1313/posts/rust-concurrency/</guid>
+      <description>use std::thread; fn main() { // pass a closure let numbers = vec![1, 2, 3]; thread::spawn(move || { for n in numbers { println!(&amp;#34;{n}&amp;#34;); } }).join().unwrap(); let t1 = thread::spawn(f); println!(&amp;#34;Hello from the main thread.&amp;#34;); t1.join().unwrap(); } fn f(){ println!(&amp;#34;Hello from another thread!&amp;#34;); let id = thread::current().id(); println!(&amp;#34;This is my thread id: {id:?}&amp;#34;); } // scoped thread use std::thread; fn main() { let numbers = vec![1, 2, 3]; // argument s of the closure represents the scope.</description>
+    </item>
     <item>
       <title>React</title>
       <link>http://localhost:1313/posts/react/</link>
       <pubDate>Thu, 14 Mar 2024 19:42:12 +0800</pubDate>
       <guid>http://localhost:1313/posts/react/</guid>
-      <description> jsx：component返回的jsx，看起来像html，实际是javascript，通过babel将jsx编译成javascript，这些js最后通过dom操作生产html。jsx融合了html，css，js三个。 props：是属性，是上级component向下级component传递的只读的信息 state：使用useState()返回一个初始值v和一个function setV。useState是一个react Hook。根据当前state更新新的state需要用lambda function UI = 很多components = f(state) Npx create-react-app@5 travel-list 运行：npm start </description>
+      <description> jsx：component返回的jsx，看起来像html，实际是javascript，通过babel将jsx编译成javascript，这些js最后通过dom操作生产html。jsx融合了html，css，js三个。 props：是属性，是上级component向下级component传递的只读的信息 state：使用useState()返回一个初始值v和一个function setV。useState是一个react Hook。根据当前state更新新的state需要用lambda function UI = 很多components = f(state) Npx create-react-app@5 travel-list 运行：npm install; npm start </description>
     </item>
     <item>
       <title>Cpp Concurrency</title>
@@ -48,7 +55,7 @@
       <link>http://localhost:1313/posts/linux-io/</link>
       <pubDate>Fri, 17 Nov 2023 01:04:58 +0800</pubDate>
       <guid>http://localhost:1313/posts/linux-io/</guid>
-      <description>阻塞非阻塞 阻塞占用资源少，但是一个线程通过阻塞IO，只能处理一个请求。 非阻塞需要一直轮询，占用CPU资源大。&#xA;解决方法一：阻塞+多线程/多进程。 浪费资源 解决方法二：非阻塞忙轮询 while(true) { for i in 流[] { if(i has data) { read/ other process } } } 方法三：IO多路复用：既能阻塞等待，不浪费CPU资源，也能同一时刻监听多个IO请求的状态 select: while(true) { select(流[]); // 阻塞 max 1024个 for i in 流[] { if(i has data) { read/ other process } } } epoll:&#xA;while(true) { 可处理的流 = epoll_wait(epoll_fd);// 阻塞 max `cat /proc/sys/fs/file-max` 个 for i in 可处理的流[] { read/ other process } } select/ poll select 实现多路复用的方式是，将已连接的 Socket 都放到一个文件描述符集合，然后调用 select 函数将文件描述符集合拷贝到内核里，让内核来检查是否有网络事件产生，检查的方式很粗暴，就是通过遍历文件描述符集合的方式，当检查到有事件产生后，将此 Socket 标记为可读或可写， 接着再把整个文件描述符集合拷贝回用户态里，然后用户态还需要再通过遍历的方法找到可读或可写的 Socket，然后再对其处理。</description>
+      <description>阻塞非阻塞 阻塞占用资源少，但是一个线程通过阻塞IO，只能处理一个请求。 非阻塞需要一直轮询，占用CPU资源大。&#xA;解决方法一：阻塞+多线程/多进程。 浪费资源 解决方法二：非阻塞忙轮询 while(true) { for i in stream[] { if(i has data) { read/ other process } } } 方法三：IO多路复用：既能阻塞等待，不浪费CPU资源，也能同一时刻监听多个IO请求的状态 select: while(true) { select(stream[]); // 阻塞 max 1024个 for i in stream[] { if(i has data) { read/ other process } } } epoll:&#xA;while(true) { 可处理的流 = epoll_wait(epoll_fd);// 阻塞 max `cat /proc/sys/fs/file-max` 个 for i in 可处理的流[] { read/ other process } } select/ poll select 实现多路复用的方式是，将已连接的 Socket 都放到一个文件描述符集合，然后调用 select 函数将文件描述符集合拷贝到内核里，让内核来检查是否有网络事件产生，检查的方式很粗暴，就是通过遍历文件描述符集合的方式，当检查到有事件产生后，将此 Socket 标记为可读或可写， 接着再把整个文件描述符集合拷贝回用户态里，然后用户态还需要再通过遍历的方法找到可读或可写的 Socket，然后再对其处理。</description>
     </item>
     <item>
       <title>wsl 代理问题</title>
