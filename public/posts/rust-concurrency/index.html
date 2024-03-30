@@ -1,0 +1,662 @@
+<!doctype html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html
+  class="not-ready lg:text-base"
+  style="--bg: #faf8f1"
+  lang="en-us"
+>
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, shrink-to-fit=no"
+  />
+
+  
+  <title>Rust Concurrency - greathongtu 的 Blog</title>
+
+  
+  <meta name="theme-color" />
+
+  
+  
+  
+  
+  <meta name="description" content="use std::thread; fn main() { // pass a closure let numbers = vec![1, 2, 3]; thread::spawn(move || { for n in numbers { println!(&#34;{n}&#34;); } }).join().unwrap(); let t1 = thread::spawn(f); println!(&#34;Hello from the main thread.&#34;); t1.join().unwrap(); } fn f(){ println!(&#34;Hello from another thread!&#34;); let id = thread::current().id(); println!(&#34;This is my thread id: {id:?}&#34;); } // scoped thread use std::thread; fn main() { let numbers = vec![1, 2, 3]; // argument s of the closure represents the scope." />
+  <meta name="author" content="greathongtu 的 Blog" />
+  
+
+  
+  
+  
+  
+  
+  
+  <link rel="preload stylesheet" as="style" href="http://localhost:1313/main.min.css" />
+
+  
+  
+  
+  
+  
+  <link rel="preload" as="image" href="http://localhost:1313/theme.png" />
+
+  
+  
+  
+  
+  
+
+  
+  
+  <link rel="preload" as="image" href="http://localhost:1313/github.svg" />
+  
+  
+
+  
+  
+  <script
+    defer
+    src="http://localhost:1313/highlight.min.js"
+    onload="hljs.initHighlightingOnLoad();"
+  ></script>
+  
+
+  
+  
+  
+
+  
+  <link rel="icon" href="http://localhost:1313/favicon.ico" />
+  <link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png" />
+
+  
+  <meta name="generator" content="Hugo 0.124.1">
+
+  
+  
+  
+</head>
+
+  <body class="text-black duration-200 ease-out dark:text-white">
+    <header class="mx-auto flex h-[4.5rem] max-w-3xl px-8 lg:justify-center">
+  <div class="relative z-50 mr-auto flex items-center">
+    <a
+      class="-translate-x-[1px] -translate-y-[1px] text-2xl font-semibold"
+      href="http://localhost:1313/"
+      >greathongtu 的 Blog</a
+    >
+    <div
+      class="btn-dark text-[0] ml-4 h-6 w-6 shrink-0 cursor-pointer [background:url(./theme.png)_left_center/_auto_theme('spacing.6')_no-repeat] [transition:_background-position_0.4s_steps(5)] dark:[background-position:right]"
+      role="button"
+      aria-label="Dark"
+    ></div>
+  </div>
+
+  <div
+    class="btn-menu relative z-50 -mr-8 flex h-[4.5rem] w-[5rem] shrink-0 cursor-pointer flex-col items-center justify-center gap-2.5 lg:hidden"
+    role="button"
+    aria-label="Menu"
+  ></div>
+
+  
+
+  <script>
+    
+    const htmlClass = document.documentElement.classList;
+    setTimeout(() => {
+      htmlClass.remove('not-ready');
+    }, 10);
+
+    
+    const btnMenu = document.querySelector('.btn-menu');
+    btnMenu.addEventListener('click', () => {
+      htmlClass.toggle('open');
+    });
+
+    
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    const lightBg = '#faf8f1'.replace(/"/g, '');
+    const setDark = (isDark) => {
+      metaTheme.setAttribute('content', isDark ? '#000' : lightBg);
+      htmlClass[isDark ? 'add' : 'remove']('dark');
+      localStorage.setItem('dark', isDark);
+    };
+
+    
+    const darkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+    if (htmlClass.contains('dark')) {
+      setDark(true);
+    } else {
+      const darkVal = localStorage.getItem('dark');
+      setDark(darkVal ? darkVal === 'true' : darkScheme.matches);
+    }
+
+    
+    darkScheme.addEventListener('change', (event) => {
+      setDark(event.matches);
+    });
+
+    
+    const btnDark = document.querySelector('.btn-dark');
+    btnDark.addEventListener('click', () => {
+      setDark(localStorage.getItem('dark') !== 'true');
+    });
+  </script>
+
+  <div
+    class="nav-wrapper fixed inset-x-0 top-full z-40 flex h-full select-none flex-col justify-center pb-16 duration-200 dark:bg-black lg:static lg:h-auto lg:flex-row lg:!bg-transparent lg:pb-0 lg:transition-none"
+  >
+    
+    
+
+    
+    <nav
+      class="mt-12 flex justify-center space-x-10 dark:invert lg:ml-12 lg:mt-0 lg:items-center lg:space-x-6"
+    >
+      
+      <a
+        class="h-8 w-8 text-[0] [background:var(--url)_center_center/cover_no-repeat] lg:h-6 lg:w-6"
+        style="--url: url(./github.svg)"
+        href="https://github.com/greathongtu"
+        target="_blank"
+        rel="me"
+      >
+        github
+      </a>
+      
+    </nav>
+    
+  </div>
+</header>
+
+
+    <main
+      class="prose prose-neutral relative mx-auto min-h-[calc(100%-9rem)] max-w-3xl px-8 pb-16 pt-12 dark:prose-invert"
+    >
+      
+
+<article>
+  <header class="mb-16">
+    <h1 class="!my-0 pb-2.5">Rust Concurrency</h1>
+
+    
+    <div class="text-sm antialiased opacity-60">
+      
+      <time>Mar 31, 2024</time>
+      
+      
+      
+      
+    </div>
+    
+  </header>
+
+  <section><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">use</span> std::thread; 
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// pass a closure
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">let</span> numbers <span style="color:#f92672">=</span> vec![<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">3</span>]; 
+</span></span><span style="display:flex;"><span>    thread::spawn(<span style="color:#66d9ef">move</span> <span style="color:#f92672">||</span> { 
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> n <span style="color:#66d9ef">in</span> numbers { 
+</span></span><span style="display:flex;"><span>            println!(<span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{n}</span><span style="color:#e6db74">&#34;</span>);
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }).join().unwrap();
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> t1 <span style="color:#f92672">=</span>     thread::spawn(f); 
+</span></span><span style="display:flex;"><span>    println!(<span style="color:#e6db74">&#34;Hello from the main thread.&#34;</span>);
+</span></span><span style="display:flex;"><span>    t1.join().unwrap();
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">f</span>(){
+</span></span><span style="display:flex;"><span>    println!(<span style="color:#e6db74">&#34;Hello from another thread!&#34;</span>); 
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> id <span style="color:#f92672">=</span> thread::current().id(); 
+</span></span><span style="display:flex;"><span>    println!(<span style="color:#e6db74">&#34;This is my thread id: </span><span style="color:#e6db74">{id:?}</span><span style="color:#e6db74">&#34;</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// scoped thread
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">use</span> std::thread;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> numbers <span style="color:#f92672">=</span> vec![<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">3</span>];
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// argument s of the closure represents the scope. 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    thread::scope(<span style="color:#f92672">|</span>s<span style="color:#f92672">|</span> {
+</span></span><span style="display:flex;"><span>        s.spawn(<span style="color:#f92672">||</span> {
+</span></span><span style="display:flex;"><span>            println!(<span style="color:#e6db74">&#34;length: </span><span style="color:#e6db74">{}</span><span style="color:#e6db74">&#34;</span>, numbers.len());
+</span></span><span style="display:flex;"><span>        });
+</span></span><span style="display:flex;"><span>        s.spawn(<span style="color:#f92672">||</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">for</span> n <span style="color:#66d9ef">in</span> <span style="color:#f92672">&amp;</span>numbers {
+</span></span><span style="display:flex;"><span>                println!(<span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{n}</span><span style="color:#e6db74">&#34;</span>);
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        });
+</span></span><span style="display:flex;"><span>    });
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// interior mutability
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Cell: single threaded
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// To avoid undefined behavior, it only allows you to copy the value out (if T is Copy),
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// or replace it with another value as a whole 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">use</span> std::cell::Cell;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">f</span>(v: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">Cell</span><span style="color:#f92672">&lt;</span>Vec<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">i32</span><span style="color:#f92672">&gt;&gt;</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> <span style="color:#66d9ef">mut</span> v2 <span style="color:#f92672">=</span> v.take(); <span style="color:#75715e">// Replaces the contents of the Cell with an empty Vec
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    v2.push(<span style="color:#ae81ff">1</span>);
+</span></span><span style="display:flex;"><span>    v.set(v2); <span style="color:#75715e">// Put the modified Vec back
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> v <span style="color:#f92672">=</span> Cell::new(vec![<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">3</span>]);
+</span></span><span style="display:flex;"><span>    f(<span style="color:#f92672">&amp;</span>v);
+</span></span><span style="display:flex;"><span>    assert_eq!(v.into_inner(), vec![<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">3</span>, <span style="color:#ae81ff">1</span>]);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// RefCell: single threaded
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// allow you to borrow its contents 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// If you try to borrow it while it is already mutably borrowed it will panic 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">f</span>(v: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">RefCell</span><span style="color:#f92672">&lt;</span>Vec<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">i32</span><span style="color:#f92672">&gt;&gt;</span>) {
+</span></span><span style="display:flex;"><span>    v.borrow_mut().push(<span style="color:#ae81ff">1</span>); <span style="color:#75715e">// We can modify the `Vec` directly. 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>} 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// RwLock: concurrent version of RefCell
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// unlike a RefCell, it does not panic. 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Instead, it blocks the current thread — putting it to sleep when conflicting
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// more complicated version of mutex. Instead of a single lock() method, it has a read() and write() method for locking 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Atomics: concurrent version of Cell 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Unlike a Cell, they cannot be of arbitrary size.there is no generic Atomic&lt;T&gt; type for any T
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// there are only specific atomic types such as AtomicU32 and AtomicPtr&lt;T&gt; 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// UnsafeCell: primitive building block for interior mutability. 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// its get() method just gives a raw pointer to the value it wraps 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Usually UnsafeCell is not used directly, but wrapped in Cell or Mutex 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Send &amp; Sync
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// A type is Send if it can be sent to another thread. 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// A type is Sync if it can be shared with another thread aka: &amp;T is Send. 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// They are auto traits. To opt out, add a field like std::marker::PhantomData&lt;T&gt;.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// PhantomData is treated by the compiler as a T. doesn’t exist at runtime. zero-sized
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">use</span> std::marker::PhantomData; 
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">X</span> {
+</span></span><span style="display:flex;"><span>    handle: <span style="color:#66d9ef">i32</span>, 
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Since Cell&lt;()&gt; is not Sync.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    _not_sync: <span style="color:#a6e22e">PhantomData</span><span style="color:#f92672">&lt;</span>Cell<span style="color:#f92672">&lt;</span>()<span style="color:#f92672">&gt;&gt;</span>, 
+</span></span><span style="display:flex;"><span>} 
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Raw pointers (*const T and *mut T) are neither Send nor Sync. To opt in, impl it urself
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Mutex&lt;T&gt; does not have an unlock() method. Instead lock() method returns MutexGuard.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// MutexGuard behaves like an exclusive reference through the DerefMut trait.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">use</span> std::sync::Mutex;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> std::thread;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> n <span style="color:#f92672">=</span> Mutex::new(<span style="color:#ae81ff">0</span>);
+</span></span><span style="display:flex;"><span>    thread::scope(<span style="color:#f92672">|</span>s<span style="color:#f92672">|</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> _ <span style="color:#66d9ef">in</span> <span style="color:#ae81ff">0</span><span style="color:#f92672">..</span><span style="color:#ae81ff">10</span> {
+</span></span><span style="display:flex;"><span>            s.spawn(<span style="color:#f92672">||</span> {
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// MutexGuard. unwrap() relate to lock poisoning. 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                <span style="color:#66d9ef">let</span> <span style="color:#66d9ef">mut</span> guard <span style="color:#f92672">=</span> n.lock().unwrap();
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">for</span> _ <span style="color:#66d9ef">in</span> <span style="color:#ae81ff">0</span><span style="color:#f92672">..</span><span style="color:#ae81ff">100</span> {
+</span></span><span style="display:flex;"><span>                    <span style="color:#75715e">// DerefMut trait
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                    <span style="color:#f92672">*</span>guard <span style="color:#f92672">+=</span> <span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>                }
+</span></span><span style="display:flex;"><span>            });
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    });
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// into_inner takes ownership of the mutex, nothing else have a reference to the mutex anymore 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    assert_eq!(n.into_inner().unwrap(), <span style="color:#ae81ff">1000</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Lock Poisoning 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// A Mutex gets marked as poisoned when a thread panics while holding the lock. 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// When that happens, the Mutex will no longer be locked, calling lock() will result in an Err.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Lifetime of the MutexGuard 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Any temporaries produced within a larger expression, like the guard returned by lock()
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// will be dropped at the end of the statement. 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>list.lock().unwrap().push(<span style="color:#ae81ff">1</span>);
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// common pitfall regarding to this:
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// item could be borrowing from the list, making it necessary to keep the guard around. 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">if</span> <span style="color:#66d9ef">let</span> Some(item) <span style="color:#f92672">=</span> list.lock().unwrap().front() {
+</span></span><span style="display:flex;"><span>    process_item(item); 
+</span></span><span style="display:flex;"><span>} 
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// the temporary guard does get dropped before if statement body
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// since the condition of a  if statement is a plain boolean. No reason to extend the lifetime 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">if</span> list.lock().unwrap().pop() <span style="color:#f92672">==</span> Some(<span style="color:#ae81ff">1</span>) {
+</span></span><span style="display:flex;"><span>    do_something(); 
+</span></span><span style="display:flex;"><span>} 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Waiting: Parking and Condition Variables 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// When data is mutated by multiple threads, there are many situations where they would need to wait for some event, for some condition about the data to become true.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// For example, if we have a mutex protecting a Vec, we might want to wait until it contains anything. 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// If a mutex was all we had, we’d have to keep locking the mutex to repeatedly check if there’s anything in the Vec yet. 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">use</span> std::collections::VecDeque;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> std::sync::Mutex;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> std::thread;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> std::time::Duration;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> queue <span style="color:#f92672">=</span> Mutex::new(VecDeque::new());
+</span></span><span style="display:flex;"><span>    thread::scope(<span style="color:#f92672">|</span>s<span style="color:#f92672">|</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// Consuming thread
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">let</span> t <span style="color:#f92672">=</span> s.spawn(<span style="color:#f92672">||</span> <span style="color:#66d9ef">loop</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">let</span> item <span style="color:#f92672">=</span> queue.lock().unwrap().pop_front();
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// if not found, park itself
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            <span style="color:#66d9ef">if</span> <span style="color:#66d9ef">let</span> Some(item) <span style="color:#f92672">=</span> item {
+</span></span><span style="display:flex;"><span>                dbg!(item);
+</span></span><span style="display:flex;"><span>            } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>                thread::park();
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        });
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#75715e">// Producing thread
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">for</span> i <span style="color:#66d9ef">in</span> <span style="color:#ae81ff">0</span><span style="color:#f92672">..</span> {
+</span></span><span style="display:flex;"><span>            queue.lock().unwrap().push_back(i);
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// wake t up
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            t.thread().unpark();
+</span></span><span style="display:flex;"><span>            thread::sleep(Duration::from_secs(<span style="color:#ae81ff">1</span>));
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    });
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// An important observation: this program would still be correct if we remove parking. 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// although inefficient. spurious wake-ups 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// a call to unpark() before the thread parks itself does not get lost. Otherwise starve
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// but unpark() requests don’t stack up 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// if we had multiple consumer threads taking items from the same queue, we need Condition Variables
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">use</span> std::collections::VecDeque;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> std::sync::Condvar;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> std::sync::Mutex;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> std::thread;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> std::time::Duration;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> queue <span style="color:#f92672">=</span> Mutex::new(VecDeque::new());
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> not_empty <span style="color:#f92672">=</span> Condvar::new();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    thread::scope(<span style="color:#f92672">|</span>s<span style="color:#f92672">|</span> {
+</span></span><span style="display:flex;"><span>        s.spawn(<span style="color:#f92672">||</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">loop</span> {
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">let</span> <span style="color:#66d9ef">mut</span> q <span style="color:#f92672">=</span> queue.lock().unwrap();
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">let</span> item <span style="color:#f92672">=</span> <span style="color:#66d9ef">loop</span> {
+</span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">if</span> <span style="color:#66d9ef">let</span> Some(item) <span style="color:#f92672">=</span> q.pop_front() {
+</span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">break</span> item;
+</span></span><span style="display:flex;"><span>                    } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>                        <span style="color:#75715e">// atomically unlock the mutex and start waiting 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                        <span style="color:#75715e">// wait() unlocks and sleep, when woken up, it relocks the mutex and returns a new MutexGuard 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                        q <span style="color:#f92672">=</span> not_empty.wait(q).unwrap();
+</span></span><span style="display:flex;"><span>                    }
+</span></span><span style="display:flex;"><span>                };
+</span></span><span style="display:flex;"><span>                drop(q);
+</span></span><span style="display:flex;"><span>                dbg!(item);
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        });
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> i <span style="color:#66d9ef">in</span> <span style="color:#ae81ff">0</span><span style="color:#f92672">..</span> {
+</span></span><span style="display:flex;"><span>            queue.lock().unwrap().push_back(i);
+</span></span><span style="display:flex;"><span>            not_empty.notify_one();
+</span></span><span style="display:flex;"><span>            thread::sleep(Duration::from_secs(<span style="color:#ae81ff">1</span>));
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    });
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Normally, a Condvar is only ever used together with a single Mutex 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// A downside of a Condvar is that it only works when used together with a Mutex 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// 探讨原子操作之前，需要看内存顺序 memory ordering，每个原子操作都有一个std::sync::atomic::Ordering参数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Relaxed：Still guarantees consistency on a single atomic variable, 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// but does not promise anything about the relative order of operations between different variables. 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// So two threads might see operations on different variables happen in a different order. 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span> 
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Atomic Load and Store Operations 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">impl</span> AtomicI32 {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">pub</span> <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">load</span>(<span style="color:#f92672">&amp;</span>self, ordering: <span style="color:#a6e22e">Ordering</span>) -&gt; <span style="color:#66d9ef">i32</span>;
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// only takes shared reference
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">pub</span> <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">store</span>(<span style="color:#f92672">&amp;</span>self, value: <span style="color:#66d9ef">i32</span>, ordering: <span style="color:#a6e22e">Ordering</span>); 
+</span></span><span style="display:flex;"><span>} 
+</span></span><span style="display:flex;"><span> 
+</span></span><span style="display:flex;"><span> 
+</span></span><span style="display:flex;"><span> <span style="color:#75715e">// std::sync::Once and std::sync::OnceLock 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span> 
+</span></span><span style="display:flex;"><span> 
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Fetch-and-Modify Operations
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// could overflow compared to CAS
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Example: Progress Reporting from Multiple Threads 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// https://github.com/m-ou-se/rust-atomics-and-locks/blob/main/examples/ch2-06-progress-reporting-multiple-threads.rs
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// example: Statistics 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// the three atomic variables are updated separately, 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// the Relaxed memory ordering gives no guarantees about the relative order of operations  
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// https://github.com/m-ou-se/rust-atomics-and-locks/blob/main/examples/ch2-07-statistics.rs
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span> 
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// example: ID Allocation. could overflow 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// https://github.com/m-ou-se/rust-atomics-and-locks/blob/main/examples/ch2-08-id-allocation.rs
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// CAS signature
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">impl</span> AtomicI32 {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">pub</span> <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">compare_exchange</span>(
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&amp;</span>self,
+</span></span><span style="display:flex;"><span>        expected: <span style="color:#66d9ef">i32</span>,
+</span></span><span style="display:flex;"><span>        new: <span style="color:#66d9ef">i32</span>,
+</span></span><span style="display:flex;"><span>        success_order: <span style="color:#a6e22e">Ordering</span>,
+</span></span><span style="display:flex;"><span>        failure_order: <span style="color:#a6e22e">Ordering</span> 
+</span></span><span style="display:flex;"><span>    ) -&gt; Result<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">i32</span>, <span style="color:#66d9ef">i32</span><span style="color:#f92672">&gt;</span>;
+</span></span><span style="display:flex;"><span>} 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">//  CAS example usage
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">use</span> std::sync::atomic::AtomicU32;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> std::sync::atomic::Ordering::Relaxed;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">increment</span>(a: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">AtomicU32</span>) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> <span style="color:#66d9ef">mut</span> current <span style="color:#f92672">=</span> a.load(Relaxed);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">loop</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">let</span> new <span style="color:#f92672">=</span> current <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">match</span> a.compare_exchange(current, new, Relaxed, Relaxed) {
+</span></span><span style="display:flex;"><span>            Ok(_) <span style="color:#f92672">=&gt;</span> <span style="color:#66d9ef">return</span>,
+</span></span><span style="display:flex;"><span>            Err(v) <span style="color:#f92672">=&gt;</span> current <span style="color:#f92672">=</span> v,
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> a <span style="color:#f92672">=</span> AtomicU32::new(<span style="color:#ae81ff">0</span>);
+</span></span><span style="display:flex;"><span>    increment(<span style="color:#f92672">&amp;</span>a);
+</span></span><span style="display:flex;"><span>    increment(<span style="color:#f92672">&amp;</span>a);
+</span></span><span style="display:flex;"><span>    assert_eq!(a.into_inner(), <span style="color:#ae81ff">2</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// compare_exchange_weak is more efficiently on some platforms.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Fetch-Update: for the compare-and-exchange loop pattern. 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// CAS 的应用场景：生成某种密钥，只要生成一次，之后的就不要再生成了，用已经有的
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">use</span> std::sync::atomic::AtomicU64;
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> std::sync::atomic::Ordering::Relaxed;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">get_key</span>() -&gt; <span style="color:#66d9ef">u64</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">static</span> <span style="color:#66d9ef">KEY</span>: <span style="color:#a6e22e">AtomicU64</span> <span style="color:#f92672">=</span> AtomicU64::new(<span style="color:#ae81ff">0</span>);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> key <span style="color:#f92672">=</span> <span style="color:#66d9ef">KEY</span>.load(Relaxed);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">if</span> key <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">let</span> new_key <span style="color:#f92672">=</span> generate_random_key();
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">match</span> <span style="color:#66d9ef">KEY</span>.compare_exchange(<span style="color:#ae81ff">0</span>, new_key, Relaxed, Relaxed) {
+</span></span><span style="display:flex;"><span>            Ok(_) <span style="color:#f92672">=&gt;</span> new_key,
+</span></span><span style="display:flex;"><span>            Err(k) <span style="color:#f92672">=&gt;</span> k,
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>        key
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">generate_random_key</span>() -&gt; <span style="color:#66d9ef">u64</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#ae81ff">123</span>
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Memory Reordering
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>Ordering::Relaxed 
+</span></span><span style="display:flex;"><span>Ordering::{Release, Acquire, AcqRel} 
+</span></span><span style="display:flex;"><span>Ordering::SeqCst 
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// ?????? output could be 0 20
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">static</span> X: <span style="color:#a6e22e">AtomicI32</span> <span style="color:#f92672">=</span> AtomicI32::new(<span style="color:#ae81ff">0</span>);
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">static</span> Y: <span style="color:#a6e22e">AtomicI32</span> <span style="color:#f92672">=</span> AtomicI32::new(<span style="color:#ae81ff">0</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">a</span>() {
+</span></span><span style="display:flex;"><span>    X.store(<span style="color:#ae81ff">10</span>, Relaxed);
+</span></span><span style="display:flex;"><span>    Y.store(<span style="color:#ae81ff">20</span>, Relaxed);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">b</span>() {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> y <span style="color:#f92672">=</span> Y.load(Relaxed);
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> x <span style="color:#f92672">=</span> X.load(Relaxed);
+</span></span><span style="display:flex;"><span>    println!(<span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{x}</span><span style="color:#e6db74"> </span><span style="color:#e6db74">{y}</span><span style="color:#e6db74">&#34;</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">main</span>() {
+</span></span><span style="display:flex;"><span>    thread::scope(<span style="color:#f92672">|</span>s<span style="color:#f92672">|</span> {
+</span></span><span style="display:flex;"><span>        s.spawn(a);
+</span></span><span style="display:flex;"><span>        s.spawn(b);
+</span></span><span style="display:flex;"><span>    });
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Spawning and Joining 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Spawning a thread creates a happens-before relationship between what happened before the spawn() call, and the new thread.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Similarly, joining a thread creates a happens-before relationship between the joined thread and what happens after the join() call.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 也就是只有中间的部分能上下移动
+</span></span></span></code></pre></div><h2 id="relaxed-ordering">Relaxed Ordering</h2>
+<p>While atomic operations using relaxed memory ordering do not provide any happens-before relationship, they do guarantee a total modification order of each individual atomic variable. This means that all modifications of the same atomic variable happen in an order that is the same from the perspective of every single thread.
+在不同的线程看来，对于同一个原子变量的不同修改是相同顺序的
+reference code: <a href="https://github.com/m-ou-se/rust-atomics-and-locks/blob/main/examples/ch3-04-total-modification-order-2.rs">https://github.com/m-ou-se/rust-atomics-and-locks/blob/main/examples/ch3-04-total-modification-order-2.rs</a></p>
+<h2 id="release-and-acquire-ordering">Release and Acquire Ordering</h2>
+<p>Release and acquire memory ordering are used in a pair to form a happens-before relationship between threads. Release memory ordering applies to store operations, while Acquire memory ordering applies to load operations.
+当acquire-load operation 观察到 release-store operation 的结果的时候，A happens-before relationship is formed。store及之前的 happened before load及之后的 （like Spawning and Joining）
+When using Acquire for a fetch-and-modify or compare-and-exchange operation, it applies only to the part of the operation that loads the value. Similarly, Release applies only to the store part of an operation. AcqRel is used to represent the combination of Acquire and Release, which causes both the load to use acquire ordering, and the store to use release ordering
+code：https://github.com/m-ou-se/rust-atomics-and-locks/blob/main/examples/ch3-06-release-acquire.rs
+结果只可能是123。如果用Relaxed内存顺序的话，就可能是0了
+所以 release 和 acquire 是成对出现的，用来建立 happens before 关系的
+在上面这个code的例子中，happens-before relationship的存在导致我们其实不需要这些操作是原子的也不会store 和 load 同时发生。但我们换成 non-atomic type 的话 Rust 的类型系统不理解，所以要unsafe</p>
+<p>如果acquire-load 对应的 release 是个 fetch-and-modify 或者compare-and-exchange 操作而不是普通store操作，那这个load和之前任意个 fetch-and-modify 或者compare-and-exchange 操作都形成了happens before关系</p>
+<p>we use release and acquire memory ordering to make sure initializing the data has actually happened-before creating a reference to it
+code：https://github.com/m-ou-se/rust-atomics-and-locks/blob/main/examples/ch3-09-lazy-init-box.rs</p>
+<p><img src="/images/3threads_happen_before.png" alt="3threads"></p>
+<h2 id="consume-ordering">Consume Ordering</h2>
+<p>Something weaker than acquire ordering might suffice: consume ordering. more efficient but hard to implement. For now, unfeasible.</p>
+<h2 id="sequentially-consistent-ordering">Sequentially Consistent Ordering</h2>
+<p>The strongest memory ordering: Ordering::SeqCst
+almost never necessary</p>
+<h2 id="memory-ordering-summary">Memory Ordering Summary</h2>
+<ul>
+<li>There might not be a global consistent order of all atomic operations, as things can appear to happen in a different order from different threads.</li>
+<li>However, each individual atomic variable has its own total modification order, regardless of memory ordering, which all threads agree on.</li>
+<li>The order of operations is formally defined through happens-before relationships.</li>
+<li>Within a single thread, there is a happens-before relationship between every single operation.</li>
+<li>Spawning a thread happens-before everything the spawned thread does.</li>
+<li>Everything a thread does happens-before joining that thread.</li>
+<li>Unlocking a mutex happens-before locking that mutex again.</li>
+<li>Acquire-loading the value from a release-store establishes a happens-before rela‐ tionship. This value may be modified by any number of fetch-and-modify and compare-and-exchange operations.</li>
+<li>A consume-load would be a lightweight version of an acquire-load, if it existed.</li>
+<li>Sequentially consistent ordering results in a globally consistent order of opera‐ tions, but is almost never necessary and can make code review more complicated.</li>
+<li>Fences allow you to combine the memory ordering of multiple operations or apply a memory ordering conditionally.</li>
+</ul>
+<h2 id="try-impl">try impl</h2>
+<p>my_spin_lock: <a href="https://github.com/m-ou-se/rust-atomics-and-locks/blob/main/src/ch4_spin_lock/s3_guard.rs">https://github.com/m-ou-se/rust-atomics-and-locks/blob/main/src/ch4_spin_lock/s3_guard.rs</a></p>
+<p>My channels: <a href="https://github.com/m-ou-se/rust-atomics-and-locks/blob/main/src/ch5_channels/s6_blocking.rs">https://github.com/m-ou-se/rust-atomics-and-locks/blob/main/src/ch5_channels/s6_blocking.rs</a></p>
+</section>
+
+  
+  
+
+  
+  
+  
+  
+  <nav class="mt-24 flex rounded-lg bg-black/[3%] text-lg dark:bg-white/[8%]">
+    
+    
+    <a
+      class="ml-auto flex w-1/2 items-center justify-end rounded-r-md p-6 pl-3 font-semibold no-underline hover:bg-black/[2%] dark:hover:bg-white/[3%]"
+      href="http://localhost:1313/posts/react/"
+      ><span>React</span><span class="ml-1.5">→</span></a
+    >
+    
+  </nav>
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+</article>
+
+
+    </main>
+
+    <footer
+  class="opaco mx-auto flex h-[4.5rem] max-w-3xl items-center px-8 text-[0.9em] opacity-60"
+>
+  <div class="mr-auto">
+    &copy; 2024
+    <a class="link" href="http://localhost:1313/">greathongtu 的 Blog</a>
+  </div>
+  <a class="link mx-6" href="https://gohugo.io/" rel="noopener" target="_blank"
+    >Powered by Hugo️️</a
+  >️
+  <a
+    class="link"
+    href="https://github.com/nanxiaobei/hugo-paper"
+    rel="noopener"
+    target="_blank"
+    >✎ Paper</a
+  >
+</footer>
+
+  </body>
+</html>
