@@ -6,8 +6,15 @@
     <description>Recent content in Posts on greathongtu 的 Blog</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Sun, 31 Mar 2024 01:39:55 +0800</lastBuildDate>
+    <lastBuildDate>Wed, 03 Apr 2024 15:28:46 +0800</lastBuildDate>
     <atom:link href="http://localhost:1313/posts/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Idiomatic_rust</title>
+      <link>http://localhost:1313/posts/idiomatic_rust/</link>
+      <pubDate>Wed, 03 Apr 2024 15:28:46 +0800</pubDate>
+      <guid>http://localhost:1313/posts/idiomatic_rust/</guid>
+      <description>遍历可遍历对象(Iterator) The core of Iterator：&#xA;trait Iterator { type Item; fn next(&amp;amp;mut self) -&amp;gt; Option&amp;lt;Self::Item&amp;gt;; } for 循环是迭代器的语法糖&#xA;普通方式： for i in 1..10 { println!(&amp;#34;{}&amp;#34;, i); } 遍历数组： // 数组实现了 IntoIterator trait，隐式调用into_iter() method let arr = [1, 2, 3]; for i in arr { println!(&amp;#34;{i}&amp;#34;); } // enumerate let v = vec![100, 32, 57]; for (i, v) in v.iter().enumerate() { println!(&amp;#34;{} is {}&amp;#34;, i, v); } 链式方法调用 into_iter 会夺走所有权 iter 是借用 iter_mut 是可变借用 let v1: Vec&amp;lt;i32&amp;gt; = vec!</description>
+    </item>
     <item>
       <title>Rust Concurrency</title>
       <link>http://localhost:1313/posts/rust-concurrency/</link>
