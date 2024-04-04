@@ -47,7 +47,8 @@ fn main() {
 // interior mutability
 
 // Cell: single threaded
-// To avoid undefined behavior, it only allows you to copy the value out (if T is Copy),
+// To avoid undefined behavior, it only allows you 
+// to copy the value out (if T is Copy),
 // or replace it with another value as a whole 
 use std::cell::Cell;
 
@@ -66,7 +67,7 @@ fn main() {
 
 // RefCell: single threaded
 // allow you to borrow its contents 
-// If you try to borrow it while it is already mutably borrowed it will panic 
+// If you try to borrow it while it is already mutably borrowed it will panic. 
 fn f(v: &RefCell<Vec<i32>>) {
     v.borrow_mut().push(1); // We can modify the `Vec` directly. 
 } 
@@ -74,13 +75,15 @@ fn f(v: &RefCell<Vec<i32>>) {
 
 // RwLock: concurrent version of RefCell
 // unlike a RefCell, it does not panic. 
-// Instead, it blocks the current thread — putting it to sleep when conflicting
-// more complicated version of mutex. Instead of a single lock() method, it has a read() and write() method for locking 
+// Instead, it blocks the current thread — putting it to sleep when conflicting.
+// more complicated version of mutex. Instead of a single lock() method, 
+// it has a read() and write() method for locking 
 
 
 // Atomics: concurrent version of Cell 
-// Unlike a Cell, they cannot be of arbitrary size.there is no generic Atomic<T> type for any T
-// there are only specific atomic types such as AtomicU32 and AtomicPtr<T> 
+// Unlike a Cell, they cannot be of arbitrary size.
+// no generic Atomic<T> type for any T
+// there are only specific atomic types such as AtomicU32 and AtomicPtr<T>.
 
 
 // UnsafeCell: primitive building block for interior mutability. 
@@ -92,17 +95,19 @@ fn f(v: &RefCell<Vec<i32>>) {
 // A type is Send if it can be sent to another thread. 
 // A type is Sync if it can be shared with another thread aka: &T is Send. 
 // They are auto traits. To opt out, add a field like std::marker::PhantomData<T>.
-// PhantomData is treated by the compiler as a T. doesn’t exist at runtime. zero-sized
+// PhantomData is treated as a T. not exist at runtime. zero-sized
 use std::marker::PhantomData; 
 struct X {
     handle: i32, 
     // Since Cell<()> is not Sync.
     _not_sync: PhantomData<Cell<()>>, 
 } 
-// Raw pointers (*const T and *mut T) are neither Send nor Sync. To opt in, impl it urself
+// Raw pointers (*const T and *mut T) are neither Send nor Sync.
+// To opt in, impl it urself
 
 
-// Mutex<T> does not have an unlock() method. Instead lock() method returns MutexGuard.
+// Mutex<T> does not have an unlock() method.
+// Instead lock() method returns MutexGuard.
 // MutexGuard behaves like an exclusive reference through the DerefMut trait.
 use std::sync::Mutex;
 use std::thread;
@@ -121,36 +126,46 @@ fn main() {
             });
         }
     });
-    // into_inner takes ownership of the mutex, nothing else have a reference to the mutex anymore 
+    // into_inner takes ownership of the mutex,
+    // nothing else have a reference to the mutex anymore 
     assert_eq!(n.into_inner().unwrap(), 1000);
 }
 
 
 // Lock Poisoning 
 // A Mutex gets marked as poisoned when a thread panics while holding the lock. 
-// When that happens, the Mutex will no longer be locked, calling lock() will result in an Err.
+// When poisoned, the Mutex will no longer be locked,
+// calling lock() will result in an Err.
 
 
-// Lifetime of the MutexGuard 
-// Any temporaries produced within a larger expression, like the guard returned by lock()
+// Lifetime of the MutexGuard:
+// Any temporaries produced within a larger expression,
+// like the guard returned by lock()
 // will be dropped at the end of the statement. 
 list.lock().unwrap().push(1);
+
 // common pitfall regarding to this:
-// item could be borrowing from the list, making it necessary to keep the guard around. 
+// item could be borrowing from the list,
+// making it necessary to keep the guard around.
 if let Some(item) = list.lock().unwrap().front() {
     process_item(item); 
 } 
 // the temporary guard does get dropped before if statement body
-// since the condition of a  if statement is a plain boolean. No reason to extend the lifetime 
+// since the condition of a if statement is a plain boolean.
+// No reason to extend the lifetime 
 if list.lock().unwrap().pop() == Some(1) {
     do_something(); 
 } 
 
 
 // Waiting: Parking and Condition Variables 
-// When data is mutated by multiple threads, there are many situations where they would need to wait for some event, for some condition about the data to become true.
-// For example, if we have a mutex protecting a Vec, we might want to wait until it contains anything. 
-// If a mutex was all we had, we’d have to keep locking the mutex to repeatedly check if there’s anything in the Vec yet. 
+// When data is mutated by multiple threads, there are many
+// situations where they would need to wait for some event,
+// for some condition about the data to become true.
+// For example, if we have a mutex protecting a Vec,
+// we might want to wait until it contains anything.
+// If a mutex was all we had, we’d have to keep locking the mutex to
+// repeatedly check if there’s anything in the Vec yet.
 use std::collections::VecDeque;
 use std::sync::Mutex;
 use std::thread;
@@ -179,13 +194,16 @@ fn main() {
         }
     });
 }
-// An important observation: this program would still be correct if we remove parking. 
-// although inefficient. spurious wake-ups 
-// a call to unpark() before the thread parks itself does not get lost. Otherwise starve
+// An important observation: this program would
+// still be correct if we remove parking although inefficient.
+// spurious wake-ups
+// a call to unpark() before the thread parks itself does not get lost.
+// Otherwise starve
 // but unpark() requests don’t stack up 
 
 
-// if we had multiple consumer threads taking items from the same queue, we need Condition Variables
+// if we had multiple consumer threads taking items from the same queue,
+// we need Condition Variables
 use std::collections::VecDeque;
 use std::sync::Condvar;
 use std::sync::Mutex;
@@ -204,8 +222,9 @@ fn main() {
                     if let Some(item) = q.pop_front() {
                         break item;
                     } else {
-                        // atomically unlock the mutex and start waiting 
-                        // wait() unlocks and sleep, when woken up, it relocks the mutex and returns a new MutexGuard 
+                        // atomically unlock the mutex and start waiting
+                        // wait() unlocks and sleep, when woken up,
+                        // it relocks the mutex and returns a new MutexGuard
                         q = not_empty.wait(q).unwrap();
                     }
                 };
@@ -221,17 +240,20 @@ fn main() {
         }
     });
 }
-// Normally, a Condvar is only ever used together with a single Mutex 
-// A downside of a Condvar is that it only works when used together with a Mutex 
+// Normally, a Condvar is only ever used together with a single Mutex
+// A downside of a Condvar is that it only works when used together with a Mutex.
 
 
 
-// 探讨原子操作之前，需要看内存顺序 memory ordering，每个原子操作都有一个std::sync::atomic::Ordering参数
-// Relaxed：Still guarantees consistency on a single atomic variable, 
-// but does not promise anything about the relative order of operations between different variables. 
-// So two threads might see operations on different variables happen in a different order. 
- 
-// Atomic Load and Store Operations 
+// 探讨原子操作之前，需要看内存顺序 memory ordering，
+// 每个原子操作都有一个std::sync::atomic::Ordering参数
+// Relaxed：Still guarantees consistency on a single atomic variable,
+// but does not promise anything about the relative order
+// of operations between different variables.
+// So two threads might see operations on different variables
+// happen in a different order.
+
+// Atomic Load and Store Operations
 impl AtomicI32 {
     pub fn load(&self, ordering: Ordering) -> i32;
     // only takes shared reference
@@ -345,8 +367,10 @@ fn main() {
 
 
 // Spawning and Joining 
-// Spawning a thread creates a happens-before relationship between what happened before the spawn() call, and the new thread.
-// Similarly, joining a thread creates a happens-before relationship between the joined thread and what happens after the join() call.
+// Spawning a thread creates a happens-before relationship
+// between what happened before the spawn() call, and the new thread.
+// Similarly, joining a thread creates a happens-before relationship 
+// between the joined thread and what happens after the join() call.
 // 也就是只有中间的部分能上下移动
 ```
 
