@@ -261,8 +261,12 @@ impl AtomicI32 {
 } 
  
  
- // std::sync::Once and std::sync::OnceLock 
- 
+// std::sync::Once and std::sync::OnceLock
+// A cell which can be written to only once
+pub struct OnceCell<T> { /* private fields */ }
+// thread-safe OnceCell, can be used in statics.
+// 用get_or_init获取值
+pub struct OnceLock<T>
  
 // Fetch-and-Modify Operations
 // could overflow compared to CAS
