@@ -9,7 +9,7 @@
     <lastBuildDate>Wed, 03 Apr 2024 15:28:46 +0800</lastBuildDate>
     <atom:link href="http://localhost:1313/posts/index.xml" rel="self" type="application/rss+xml" />
     <item>
-      <title>Idiomatic_rust</title>
+      <title>idiomatic rust way</title>
       <link>http://localhost:1313/posts/idiomatic_rust/</link>
       <pubDate>Wed, 03 Apr 2024 15:28:46 +0800</pubDate>
       <guid>http://localhost:1313/posts/idiomatic_rust/</guid>
@@ -20,7 +20,7 @@
       <link>http://localhost:1313/posts/rust-concurrency/</link>
       <pubDate>Sun, 31 Mar 2024 01:39:55 +0800</pubDate>
       <guid>http://localhost:1313/posts/rust-concurrency/</guid>
-      <description>use std::thread; fn main() { // pass a closure let numbers = vec![1, 2, 3]; thread::spawn(move || { for n in numbers { println!(&amp;#34;{n}&amp;#34;); } }).join().unwrap(); let t1 = thread::spawn(f); println!(&amp;#34;Hello from the main thread.&amp;#34;); t1.join().unwrap(); } fn f(){ println!(&amp;#34;Hello from another thread!&amp;#34;); let id = thread::current().id(); println!(&amp;#34;This is my thread id: {id:?}&amp;#34;); } // scoped thread use std::thread; fn main() { let numbers = vec![1, 2, 3]; // argument s of the closure represents the scope.</description>
+      <description>use std::thread; fn main() { // pass a closure let numbers = vec![1, 2, 3]; thread::spawn(move || { for n in numbers { println!(&amp;#34;{n}&amp;#34;); } }).join().unwrap(); let t1 = thread::spawn(f); println!(&amp;#34;Hello from the main thread.&amp;#34;); t1.join().unwrap(); } fn f(){ println!(&amp;#34;Hello from another thread!&amp;#34;); let id = thread::current().id(); println!(&amp;#34;This is my thread id: {id:?}&amp;#34;); } // scoped thread // scoped threads can borrow non-static data, // as the scope guarantees all threads will be joined at the end use std::thread; fn main() { let numbers = vec!</description>
     </item>
     <item>
       <title>React</title>

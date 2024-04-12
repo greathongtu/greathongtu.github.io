@@ -53,7 +53,7 @@
   
   
   
-  <meta name="description" content="use std::thread; fn main() { // pass a closure let numbers = vec![1, 2, 3]; thread::spawn(move || { for n in numbers { println!(&#34;{n}&#34;); } }).join().unwrap(); let t1 = thread::spawn(f); println!(&#34;Hello from the main thread.&#34;); t1.join().unwrap(); } fn f(){ println!(&#34;Hello from another thread!&#34;); let id = thread::current().id(); println!(&#34;This is my thread id: {id:?}&#34;); } // scoped thread use std::thread; fn main() { let numbers = vec![1, 2, 3]; // argument s of the closure represents the scope." />
+  <meta name="description" content="use std::thread; fn main() { // pass a closure let numbers = vec![1, 2, 3]; thread::spawn(move || { for n in numbers { println!(&#34;{n}&#34;); } }).join().unwrap(); let t1 = thread::spawn(f); println!(&#34;Hello from the main thread.&#34;); t1.join().unwrap(); } fn f(){ println!(&#34;Hello from another thread!&#34;); let id = thread::current().id(); println!(&#34;This is my thread id: {id:?}&#34;); } // scoped thread // scoped threads can borrow non-static data, // as the scope guarantees all threads will be joined at the end use std::thread; fn main() { let numbers = vec!" />
   <meta name="author" content="greathongtu 的 Blog" />
   
 
@@ -232,7 +232,7 @@
 </span></span><span style="display:flex;"><span>            println!(<span style="color:#e6db74">&#34;</span><span style="color:#e6db74">{n}</span><span style="color:#e6db74">&#34;</span>);
 </span></span><span style="display:flex;"><span>        }
 </span></span><span style="display:flex;"><span>    }).join().unwrap();
-</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> t1 <span style="color:#f92672">=</span>     thread::spawn(f); 
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> t1 <span style="color:#f92672">=</span> thread::spawn(f); 
 </span></span><span style="display:flex;"><span>    println!(<span style="color:#e6db74">&#34;Hello from the main thread.&#34;</span>);
 </span></span><span style="display:flex;"><span>    t1.join().unwrap();
 </span></span><span style="display:flex;"><span>}
@@ -244,6 +244,8 @@
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e">// scoped thread
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// scoped threads can borrow non-static data,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// as the scope guarantees all threads will be joined at the end
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">use</span> std::thread;
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">main</span>() {
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> numbers <span style="color:#f92672">=</span> vec![<span style="color:#ae81ff">1</span>, <span style="color:#ae81ff">2</span>, <span style="color:#ae81ff">3</span>];
@@ -263,9 +265,12 @@
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e">// interior mutability
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Cell&lt;T&gt; and RefCell&lt;T&gt; types may be mutated through shared references
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Both single threaded
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// Cell: single threaded
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// To avoid undefined behavior, it only allows you to copy the value out (if T is Copy),
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Cell implements interior mutability by moving values in and out of the Cell&lt;T&gt;.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// To avoid undefined behavior, it only allows you 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// to copy the value out (if T is Copy),
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e">// or replace it with another value as a whole 
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">use</span> std::cell::Cell;
 </span></span><span style="display:flex;"><span>
@@ -282,45 +287,54 @@
 </span></span><span style="display:flex;"><span>}
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// RefCell: single threaded
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// RefCell let you use references instead of values
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e">// allow you to borrow its contents 
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// If you try to borrow it while it is already mutably borrowed it will panic 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// If you try to borrow it while it is already mutably borrowed it will panic.
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">f</span>(v: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">RefCell</span><span style="color:#f92672">&lt;</span>Vec<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">i32</span><span style="color:#f92672">&gt;&gt;</span>) {
-</span></span><span style="display:flex;"><span>    v.borrow_mut().push(<span style="color:#ae81ff">1</span>); <span style="color:#75715e">// We can modify the `Vec` directly. 
+</span></span><span style="display:flex;"><span>    v.borrow_mut().push(<span style="color:#ae81ff">1</span>); <span style="color:#75715e">// We can modify the `Vec` directly.
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>} 
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// RwLock: concurrent version of RefCell
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// unlike a RefCell, it does not panic. 
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Instead, it blocks the current thread — putting it to sleep when conflicting
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// more complicated version of mutex. Instead of a single lock() method, it has a read() and write() method for locking 
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// When to choose interior mutability
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 1. Introducing mutability &#39;inside&#39; of something immutable: Rc&lt;RefCell&lt;T&gt;&gt;
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 2. Implementation details of logically-immutable methods.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 3. Mutating implementations of Clone
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// Atomics: concurrent version of Cell 
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Unlike a Cell, they cannot be of arbitrary size.there is no generic Atomic&lt;T&gt; type for any T
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// there are only specific atomic types such as AtomicU32 and AtomicPtr&lt;T&gt; 
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// RwLock &amp; mutex: concurrent version of RefCell
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// unlike a RefCell, it does not panic.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Instead, it blocks the current thread — putting it to sleep when conflicting.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// more complicated version of mutex. Instead of a single lock() method,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// it has a read() and write() method for locking
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// UnsafeCell: primitive building block for interior mutability. 
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// its get() method just gives a raw pointer to the value it wraps 
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Usually UnsafeCell is not used directly, but wrapped in Cell or Mutex 
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Atomics: concurrent version of Cell
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Unlike a Cell, they cannot be of arbitrary size.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// no generic Atomic&lt;T&gt; type for any T
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// there are only specific atomic types such as AtomicU32 and AtomicPtr&lt;T&gt;.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// UnsafeCell: primitive building block for interior mutability.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// its get() method just gives a raw pointer to the value it wraps
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Usually UnsafeCell is not used directly, but wrapped in Cell or Mutex
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e">// Send &amp; Sync
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// A type is Send if it can be sent to another thread. 
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// A type is Sync if it can be shared with another thread aka: &amp;T is Send. 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// A type is Send if it can be sent to another thread.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// A type is Sync if it can be shared with another thread aka: &amp;T is Send.
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e">// They are auto traits. To opt out, add a field like std::marker::PhantomData&lt;T&gt;.
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// PhantomData is treated by the compiler as a T. doesn’t exist at runtime. zero-sized
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">use</span> std::marker::PhantomData; 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// PhantomData is treated as a T. not exist at runtime. zero-sized
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">use</span> std::marker::PhantomData;
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">X</span> {
-</span></span><span style="display:flex;"><span>    handle: <span style="color:#66d9ef">i32</span>, 
+</span></span><span style="display:flex;"><span>    handle: <span style="color:#66d9ef">i32</span>,
 </span></span><span style="display:flex;"><span>    <span style="color:#75715e">// Since Cell&lt;()&gt; is not Sync.
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    _not_sync: <span style="color:#a6e22e">PhantomData</span><span style="color:#f92672">&lt;</span>Cell<span style="color:#f92672">&lt;</span>()<span style="color:#f92672">&gt;&gt;</span>, 
-</span></span><span style="display:flex;"><span>} 
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// Raw pointers (*const T and *mut T) are neither Send nor Sync. To opt in, impl it urself
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    _not_sync: <span style="color:#a6e22e">PhantomData</span><span style="color:#f92672">&lt;</span>Cell<span style="color:#f92672">&lt;</span>()<span style="color:#f92672">&gt;&gt;</span>,
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Raw pointers (*const T and *mut T) are neither Send nor Sync.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// To opt in Send &amp; Sync, impl it urself
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// Mutex&lt;T&gt; does not have an unlock() method. Instead lock() method returns MutexGuard.
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Mutex&lt;T&gt; does not have an unlock() method.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Instead lock() method returns MutexGuard.
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e">// MutexGuard behaves like an exclusive reference through the DerefMut trait.
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">use</span> std::sync::Mutex;
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> std::thread;
@@ -330,7 +344,7 @@
 </span></span><span style="display:flex;"><span>    thread::scope(<span style="color:#f92672">|</span>s<span style="color:#f92672">|</span> {
 </span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">for</span> _ <span style="color:#66d9ef">in</span> <span style="color:#ae81ff">0</span><span style="color:#f92672">..</span><span style="color:#ae81ff">10</span> {
 </span></span><span style="display:flex;"><span>            s.spawn(<span style="color:#f92672">||</span> {
-</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// MutexGuard. unwrap() relate to lock poisoning. 
+</span></span><span style="display:flex;"><span>                <span style="color:#75715e">// MutexGuard. unwrap() relate to lock poisoning.
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                <span style="color:#66d9ef">let</span> <span style="color:#66d9ef">mut</span> guard <span style="color:#f92672">=</span> n.lock().unwrap();
 </span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">for</span> _ <span style="color:#66d9ef">in</span> <span style="color:#ae81ff">0</span><span style="color:#f92672">..</span><span style="color:#ae81ff">100</span> {
 </span></span><span style="display:flex;"><span>                    <span style="color:#75715e">// DerefMut trait
@@ -339,36 +353,50 @@
 </span></span><span style="display:flex;"><span>            });
 </span></span><span style="display:flex;"><span>        }
 </span></span><span style="display:flex;"><span>    });
-</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// into_inner takes ownership of the mutex, nothing else have a reference to the mutex anymore 
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// into_inner takes ownership of the mutex,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// nothing else have a reference to the mutex anymore
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    assert_eq!(n.into_inner().unwrap(), <span style="color:#ae81ff">1000</span>);
 </span></span><span style="display:flex;"><span>}
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// Lock Poisoning 
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// A Mutex gets marked as poisoned when a thread panics while holding the lock. 
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// When that happens, the Mutex will no longer be locked, calling lock() will result in an Err.
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Lock Poisoning
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// A Mutex gets marked as poisoned when a thread panics while holding the lock.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// When poisoned, the Mutex will no longer be locked,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// calling lock() will result in an Err.
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// Lifetime of the MutexGuard 
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Any temporaries produced within a larger expression, like the guard returned by lock()
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// will be dropped at the end of the statement. 
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Lifetime of the MutexGuard:
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Any temporaries produced within a larger expression,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// like the guard returned by lock()
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// will be dropped at the end of the statement.
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>list.lock().unwrap().push(<span style="color:#ae81ff">1</span>);
+</span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e">// common pitfall regarding to this:
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// item could be borrowing from the list, making it necessary to keep the guard around. 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// When using match, if let, or while let
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// the lock is hold until the end of the block
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">if</span> <span style="color:#66d9ef">let</span> Some(item) <span style="color:#f92672">=</span> list.lock().unwrap().front() {
-</span></span><span style="display:flex;"><span>    process_item(item); 
-</span></span><span style="display:flex;"><span>} 
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// the temporary guard does get dropped before if statement body
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// since the condition of a  if statement is a plain boolean. No reason to extend the lifetime 
+</span></span><span style="display:flex;"><span>    process_item(item);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// This is OK
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">if</span> list.lock().unwrap().pop() <span style="color:#f92672">==</span> Some(<span style="color:#ae81ff">1</span>) {
-</span></span><span style="display:flex;"><span>    do_something(); 
-</span></span><span style="display:flex;"><span>} 
+</span></span><span style="display:flex;"><span>    do_something();
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// This is OK
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">let</span> item <span style="color:#f92672">=</span> list.lock().unwrap().pop();
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">if</span> <span style="color:#66d9ef">let</span> Some(item) <span style="color:#f92672">=</span> item {
+</span></span><span style="display:flex;"><span>    process_item(item);
+</span></span><span style="display:flex;"><span>}
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// Waiting: Parking and Condition Variables 
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// When data is mutated by multiple threads, there are many situations where they would need to wait for some event, for some condition about the data to become true.
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// For example, if we have a mutex protecting a Vec, we might want to wait until it contains anything. 
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// If a mutex was all we had, we’d have to keep locking the mutex to repeatedly check if there’s anything in the Vec yet. 
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Waiting: Parking and Condition Variables
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// When data is mutated by multiple threads, there are many
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// situations where they would need to wait for some event,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// for some condition about the data to become true.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// For example, if we have a mutex protecting a Vec,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// we might want to wait until it contains anything.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// If a mutex was all we had, we’d have to keep locking the mutex to
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// repeatedly check if there’s anything in the Vec yet.
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">use</span> std::collections::VecDeque;
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> std::sync::Mutex;
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> std::thread;
@@ -391,19 +419,23 @@
 </span></span><span style="display:flex;"><span>        <span style="color:#75715e">// Producing thread
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>        <span style="color:#66d9ef">for</span> i <span style="color:#66d9ef">in</span> <span style="color:#ae81ff">0</span><span style="color:#f92672">..</span> {
 </span></span><span style="display:flex;"><span>            queue.lock().unwrap().push_back(i);
-</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// wake t up
+</span></span><span style="display:flex;"><span>            <span style="color:#75715e">// wake it up
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>            t.thread().unpark();
 </span></span><span style="display:flex;"><span>            thread::sleep(Duration::from_secs(<span style="color:#ae81ff">1</span>));
 </span></span><span style="display:flex;"><span>        }
 </span></span><span style="display:flex;"><span>    });
 </span></span><span style="display:flex;"><span>}
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// An important observation: this program would still be correct if we remove parking. 
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// although inefficient. spurious wake-ups 
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// a call to unpark() before the thread parks itself does not get lost. Otherwise starve
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// but unpark() requests don’t stack up 
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// An important observation: this program would
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// still be correct if we remove parking although inefficient.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// spurious wake-ups
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// a call to unpark() before the thread parks itself does not get lost.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Otherwise starve
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// but unpark() requests don’t stack up
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// if we had multiple consumer threads taking items from the same queue, we need Condition Variables
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Why condition variables:
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// if we had multiple consumer threads taking items from the same queue,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// we need Condition Variables
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">use</span> std::collections::VecDeque;
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> std::sync::Condvar;
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">use</span> std::sync::Mutex;
@@ -422,8 +454,9 @@
 </span></span><span style="display:flex;"><span>                    <span style="color:#66d9ef">if</span> <span style="color:#66d9ef">let</span> Some(item) <span style="color:#f92672">=</span> q.pop_front() {
 </span></span><span style="display:flex;"><span>                        <span style="color:#66d9ef">break</span> item;
 </span></span><span style="display:flex;"><span>                    } <span style="color:#66d9ef">else</span> {
-</span></span><span style="display:flex;"><span>                        <span style="color:#75715e">// atomically unlock the mutex and start waiting 
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                        <span style="color:#75715e">// wait() unlocks and sleep, when woken up, it relocks the mutex and returns a new MutexGuard 
+</span></span><span style="display:flex;"><span>                        <span style="color:#75715e">// atomically unlock the mutex and start waiting
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                        <span style="color:#75715e">// wait() unlocks and sleep, when woken up,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                        <span style="color:#75715e">// it relocks the mutex and returns a new MutexGuard
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>                        q <span style="color:#f92672">=</span> not_empty.wait(q).unwrap();
 </span></span><span style="display:flex;"><span>                    }
 </span></span><span style="display:flex;"><span>                };
@@ -439,38 +472,46 @@
 </span></span><span style="display:flex;"><span>        }
 </span></span><span style="display:flex;"><span>    });
 </span></span><span style="display:flex;"><span>}
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// Normally, a Condvar is only ever used together with a single Mutex 
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// A downside of a Condvar is that it only works when used together with a Mutex 
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Normally, a Condvar is only ever used together with a single Mutex
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// A downside of a Condvar is that it only works when used together with a Mutex.
+</span></span></span></code></pre></div><h2 id="atomic-operations">Atomic Operations</h2>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-Rust" data-lang="Rust"><span style="display:flex;"><span><span style="color:#75715e">// 探讨原子操作之前，需要看内存顺序 memory ordering，
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 每个原子操作都有一个std::sync::atomic::Ordering参数
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Relaxed：Still guarantees consistency on a single atomic variable,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// but does not promise anything about the relative order of operations
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// between different variables.
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// 探讨原子操作之前，需要看内存顺序 memory ordering，每个原子操作都有一个std::sync::atomic::Ordering参数
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Relaxed：Still guarantees consistency on a single atomic variable, 
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// but does not promise anything about the relative order of operations between different variables. 
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// So two threads might see operations on different variables happen in a different order. 
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span> 
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// Atomic Load and Store Operations 
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// So two threads might see operations on different variables
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// happen in a different order.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Atomic Load and Store Operations
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">impl</span> AtomicI32 {
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">pub</span> <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">load</span>(<span style="color:#f92672">&amp;</span>self, ordering: <span style="color:#a6e22e">Ordering</span>) -&gt; <span style="color:#66d9ef">i32</span>;
 </span></span><span style="display:flex;"><span>    <span style="color:#75715e">// only takes shared reference
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">pub</span> <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">store</span>(<span style="color:#f92672">&amp;</span>self, value: <span style="color:#66d9ef">i32</span>, ordering: <span style="color:#a6e22e">Ordering</span>); 
-</span></span><span style="display:flex;"><span>} 
-</span></span><span style="display:flex;"><span> 
-</span></span><span style="display:flex;"><span> 
-</span></span><span style="display:flex;"><span> <span style="color:#75715e">// std::sync::Once and std::sync::OnceLock 
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span> 
-</span></span><span style="display:flex;"><span> 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#66d9ef">pub</span> <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">store</span>(<span style="color:#f92672">&amp;</span>self, value: <span style="color:#66d9ef">i32</span>, ordering: <span style="color:#a6e22e">Ordering</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// std::sync::Once and std::sync::OnceLock
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// A cell which can be written to only once
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">pub</span> <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">OnceCell</span><span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span> { <span style="color:#75715e">/* private fields */</span> }
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// thread-safe OnceCell, can be used in statics.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 用get_or_init获取值
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">pub</span> <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">OnceLock</span><span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e">// Fetch-and-Modify Operations
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e">// could overflow compared to CAS
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Example: Progress Reporting from Multiple Threads 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Example: Progress Reporting from Multiple Threads
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e">// https://github.com/m-ou-se/rust-atomics-and-locks/blob/main/examples/ch2-06-progress-reporting-multiple-threads.rs
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#75715e">// example: Statistics 
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// the three atomic variables are updated separately, 
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// the Relaxed memory ordering gives no guarantees about the relative order of operations  
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// example: Statistics
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// the three atomic variables are updated separately,
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// the Relaxed memory ordering gives no guarantees about the relative order of operations
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e">// https://github.com/m-ou-se/rust-atomics-and-locks/blob/main/examples/ch2-07-statistics.rs
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span> 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e">// example: ID Allocation. could overflow 
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e">// https://github.com/m-ou-se/rust-atomics-and-locks/blob/main/examples/ch2-08-id-allocation.rs
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
@@ -484,7 +525,7 @@
 </span></span><span style="display:flex;"><span>        success_order: <span style="color:#a6e22e">Ordering</span>,
 </span></span><span style="display:flex;"><span>        failure_order: <span style="color:#a6e22e">Ordering</span> 
 </span></span><span style="display:flex;"><span>    ) -&gt; Result<span style="color:#f92672">&lt;</span><span style="color:#66d9ef">i32</span>, <span style="color:#66d9ef">i32</span><span style="color:#f92672">&gt;</span>;
-</span></span><span style="display:flex;"><span>} 
+</span></span><span style="display:flex;"><span>}
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e">//  CAS example usage
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">use</span> std::sync::atomic::AtomicU32;
@@ -508,7 +549,7 @@
 </span></span><span style="display:flex;"><span>    assert_eq!(a.into_inner(), <span style="color:#ae81ff">2</span>);
 </span></span><span style="display:flex;"><span>}
 </span></span><span style="display:flex;"><span><span style="color:#75715e">// compare_exchange_weak is more efficiently on some platforms.
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Fetch-Update: for the compare-and-exchange loop pattern. 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Fetch-Update: for the compare-and-exchange loop pattern.
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e">// CAS 的应用场景：生成某种密钥，只要生成一次，之后的就不要再生成了，用已经有的
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">use</span> std::sync::atomic::AtomicU64;
@@ -563,8 +604,10 @@
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#75715e">// Spawning and Joining 
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Spawning a thread creates a happens-before relationship between what happened before the spawn() call, and the new thread.
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Similarly, joining a thread creates a happens-before relationship between the joined thread and what happens after the join() call.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Spawning a thread creates a happens-before relationship
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// between what happened before the spawn() call, and the new thread.
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// Similarly, joining a thread creates a happens-before relationship 
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e">// between the joined thread and what happens after the join() call.
 </span></span></span><span style="display:flex;"><span><span style="color:#75715e">// 也就是只有中间的部分能上下移动
 </span></span></span></code></pre></div><h2 id="relaxed-ordering">Relaxed Ordering</h2>
 <p>While atomic operations using relaxed memory ordering do not provide any happens-before relationship, they do guarantee a total modification order of each individual atomic variable. This means that all modifications of the same atomic variable happen in an order that is the same from the perspective of every single thread.
@@ -603,7 +646,7 @@ almost never necessary</p>
 </ul>
 <h2 id="try-impl">try impl</h2>
 <p>my_spin_lock: <a href="https://github.com/m-ou-se/rust-atomics-and-locks/blob/main/src/ch4_spin_lock/s3_guard.rs">https://github.com/m-ou-se/rust-atomics-and-locks/blob/main/src/ch4_spin_lock/s3_guard.rs</a></p>
-<p>My channels: <a href="https://github.com/m-ou-se/rust-atomics-and-locks/blob/main/src/ch5_channels/s6_blocking.rs">https://github.com/m-ou-se/rust-atomics-and-locks/blob/main/src/ch5_channels/s6_blocking.rs</a></p>
+<p>My_channels: <a href="https://github.com/m-ou-se/rust-atomics-and-locks/blob/main/src/ch5_channels/s6_blocking.rs">https://github.com/m-ou-se/rust-atomics-and-locks/blob/main/src/ch5_channels/s6_blocking.rs</a></p>
 </section>
 
   
@@ -618,7 +661,7 @@ almost never necessary</p>
     <a
       class="flex w-1/2 items-center rounded-l-md p-6 pr-3 font-semibold no-underline hover:bg-black/[2%] dark:hover:bg-white/[3%]"
       href="http://localhost:1313/posts/idiomatic_rust/"
-      ><span class="mr-1.5">←</span><span>Idiomatic_rust</span></a
+      ><span class="mr-1.5">←</span><span>idiomatic rust way</span></a
     >
     
     
