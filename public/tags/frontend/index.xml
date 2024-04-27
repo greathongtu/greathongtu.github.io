@@ -4,7 +4,7 @@
     <title>Frontend on greathongtu 的 Blog</title>
     <link>http://localhost:1313/tags/frontend/</link>
     <description>Recent content in Frontend on greathongtu 的 Blog</description>
-    <generator>Hugo -- gohugo.io</generator>
+    <generator>Hugo</generator>
     <language>en-us</language>
     <lastBuildDate>Thu, 14 Mar 2024 19:42:12 +0800</lastBuildDate>
     <atom:link href="http://localhost:1313/tags/frontend/index.xml" rel="self" type="application/rss+xml" />

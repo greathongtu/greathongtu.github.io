@@ -4,7 +4,7 @@
     <title>Go on greathongtu 的 Blog</title>
     <link>http://localhost:1313/tags/go/</link>
     <description>Recent content in Go on greathongtu 的 Blog</description>
-    <generator>Hugo -- gohugo.io</generator>
+    <generator>Hugo</generator>
     <language>en-us</language>
     <lastBuildDate>Sun, 19 Nov 2023 01:29:52 +0800</lastBuildDate>
     <atom:link href="http://localhost:1313/tags/go/index.xml" rel="self" type="application/rss+xml" />

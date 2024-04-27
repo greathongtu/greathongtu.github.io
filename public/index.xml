@@ -4,10 +4,38 @@
     <title>greathongtu 的 Blog</title>
     <link>http://localhost:1313/</link>
     <description>Recent content on greathongtu 的 Blog</description>
-    <generator>Hugo -- gohugo.io</generator>
+    <generator>Hugo</generator>
     <language>en-us</language>
-    <lastBuildDate>Wed, 03 Apr 2024 15:28:46 +0800</lastBuildDate>
+    <lastBuildDate>Sat, 27 Apr 2024 19:11:57 +0800</lastBuildDate>
     <atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" />
+    <item>
+      <title>Rust Error Handling</title>
+      <link>http://localhost:1313/posts/errors_rust/</link>
+      <pubDate>Sat, 27 Apr 2024 19:11:57 +0800</pubDate>
+      <guid>http://localhost:1313/posts/errors_rust/</guid>
+      <description>best practise: use my_module::Error; use my_module::Result;&#xA;pub type Result&amp;lt;T&amp;gt; = core::result::Result&amp;lt;T, Error&amp;gt;; pub type Error = Box&amp;lt;dyn std::error::Error&amp;gt;; </description>
+    </item>
+    <item>
+      <title>Tcp_rust</title>
+      <link>http://localhost:1313/posts/tcp_rust/</link>
+      <pubDate>Sat, 27 Apr 2024 19:04:32 +0800</pubDate>
+      <guid>http://localhost:1313/posts/tcp_rust/</guid>
+      <description>TUN/TAP: Linux feature 软件实现的操作系统内核中的虚拟网络设备. TAP等同于一个以太网设备，它操作第二层数据包如以太网数据帧。TUN模拟了网络层设备，操作第三层数据包比如IP数据封包。&#xA;操作系统通过TUN/TAP设备向绑定该设备的用户空间的程序发送数据，反之，用户空间的程序也可以像操作硬件网络设备那样，通过TUN/TAP设备发送数据。在后种情况下，TUN/TAP设备向操作系统的网络栈投递（或“注入”）数据包，从而模拟从外部接受数据的过程。&#xA;正常情况下，Internet 的数据通过 NIC(network interface card)发送到 kernel，user space 程序通过socket 读写 kernel 中的数据。通过 TUN device模拟 NIC, 我们可以直接在user space 和 kernel 之间交流。&#xA;# 查看本机的 NIC ip address # 使用 tun0 发送 ping ping -I tun0 192.168.0.2 # 使用tcp client 从本机向tun0管辖的网段请求建立tcp连接 nc 192.168.0.2 443 # 使用 tshark 查看 tun0 的数据包 tshark -i tun0 tun 设备得到的数据（ip 数据）格式如下：&#xA;Flags [2 bytes] Proto [2 bytes] # ether type. 0x86dd 是 IPv6, 0x0800 是 IPv4 Raw protocol(IP, IPv6, etc) frame.</description>
+    </item>
+    <item>
+      <title>Visitor</title>
+      <link>http://localhost:1313/posts/visitor/</link>
+      <pubDate>Sat, 27 Apr 2024 19:03:44 +0800</pubDate>
+      <guid>http://localhost:1313/posts/visitor/</guid>
+      <description>Vistor 模式通过双重分发(double dispatch) 来实现在不更改（不添加新的编译时操作）Element类层次结构的前提下，在运行时透明地为类层次结构上的各个类动态添加新的操作。 Double Dispatch: 第一个为accept方法的多态辨析（哪个element调用的accept）；第二个为visitElementX方法的多态辨析（哪个visitor）。 Vistor 模式的最大缺点在于拓展类层次结构（增加新的Element 子类）会导致 Visitor 类的改变。因此 Visitor 模式适用于“Element 类层次结构稳定，而其中的操作却经常面临频繁改动”。 C++ 代码示例：&#xA;#include &amp;lt;iostream&amp;gt; #include &amp;lt;array&amp;gt; using namespace std; class class_a; class class_b; class Visitor { public: virtual void visit_a(class_a* element_a) = 0; virtual void visit_b(class_b* element_b) = 0; }; class Component { public: virtual void accept(Visitor* visitor) = 0; }; class class_a : public Component { void accept(Visitor* visitor) override { visitor-&amp;gt;visit_a(this); } }; class class_b : public Component { void accept(Visitor* visitor) override { visitor-&amp;gt;visit_b(this); } }; // 在此之上是稳定不变的部分 // ==================================== // 在此之下是变化的部分 class MyVisitor1 : public Visitor { void visit_a(class_a* ea) { cout &amp;lt;&amp;lt; &amp;#34;MyVisitor1 visit_a&amp;#34; &amp;lt;&amp;lt; endl; } void visit_b(class_b* eb) { cout &amp;lt;&amp;lt; &amp;#34;MyVisitor1 visit_b&amp;#34; &amp;lt;&amp;lt; endl; } }; class MyVisitor2 : public Visitor { void visit_a(class_a* ea) { cout &amp;lt;&amp;lt; &amp;#34;MyVisitor2 visit_a&amp;#34; &amp;lt;&amp;lt; endl; } void visit_b(class_b* eb) { cout &amp;lt;&amp;lt; &amp;#34;MyVisitor2 visit_b&amp;#34; &amp;lt;&amp;lt; endl; } }; int main() { std::array&amp;lt;Component *, 2&amp;gt; components = {new class_a, new class_b}; Visitor* v1 = new MyVisitor1; Visitor* v2 = new MyVisitor2; for (auto* pc : components) { pc-&amp;gt;accept(v1); pc-&amp;gt;accept(v2); } } Rust 代码示例：</description>
+    </item>
+    <item>
+      <title>Progit</title>
+      <link>http://localhost:1313/posts/progit/</link>
+      <pubDate>Sat, 27 Apr 2024 19:01:54 +0800</pubDate>
+      <guid>http://localhost:1313/posts/progit/</guid>
+      <description>git log: * --grep: 仅显示commit msg中包含指定字符串的提交。 * -S string: 仅显示添加或删除匹配string的提交 * -- some_dir 最后可以加上搜索的目录名，中间用-- 分隔 撤回修改 commit 之后想修改： amend更改刚才的commit message $ git commit -m &amp;#39;initial commit&amp;#39; $ git add forgotten_file $ git commit --amend add之后想撤回： git reset HEAD file_name 删掉修改： git checkout -- file_name fetch 和 merge 的区别： fetch 拉到本地repo但是不merge git log &amp;ndash;oneline &amp;ndash;decorate &amp;ndash;graph &amp;ndash;all 看分支情况 </description>
+    </item>
     <item>
       <title>idiomatic rust way</title>
       <link>http://localhost:1313/posts/idiomatic_rust/</link>

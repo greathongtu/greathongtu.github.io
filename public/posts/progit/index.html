@@ -44,7 +44,7 @@
   />
 
   
-  <title>greathongtu 的 Blog</title>
+  <title>Progit - greathongtu 的 Blog</title>
 
   
   <meta name="theme-color" />
@@ -53,11 +53,7 @@
   
   
   
-  
-  <meta
-    name="description"
-    content="A personal blog"
-  />
+  <meta name="description" content="git log: * --grep: 仅显示commit msg中包含指定字符串的提交。 * -S string: 仅显示添加或删除匹配string的提交 * -- some_dir 最后可以加上搜索的目录名，中间用-- 分隔 撤回修改 commit 之后想修改： amend更改刚才的commit message $ git commit -m &#39;initial commit&#39; $ git add forgotten_file $ git commit --amend add之后想撤回： git reset HEAD file_name 删掉修改： git checkout -- file_name fetch 和 merge 的区别： fetch 拉到本地repo但是不merge git log &ndash;oneline &ndash;decorate &ndash;graph &ndash;all 看分支情况 " />
   <meta name="author" content="greathongtu 的 Blog" />
   
 
@@ -89,6 +85,12 @@
   
 
   
+  
+  <script
+    defer
+    src="http://localhost:1313/highlight.min.js"
+    onload="hljs.initHighlightingOnLoad();"
+  ></script>
   
 
   
@@ -205,164 +207,83 @@
     >
       
 
+<article>
+  <header class="mb-16">
+    <h1 class="!my-0 pb-2.5">Progit</h1>
 
+    
+    <div class="text-sm antialiased opacity-60">
+      
+      <time>Apr 27, 2024</time>
+      
+      
+      
+      
+    </div>
+    
+  </header>
 
-
-
-
-
-
-
-
-
- 
-
-
-
-
-
-
-
-
-
-<section class="relative my-10 first-of-type:mt-0 last-of-type:mb-0">
-  
-  <h2 class="!my-0 pb-1 font-bold !leading-none">Rust Error Handling</h2>
-  <time class="text-sm antialiased opacity-60"
-    >Apr 27, 2024</time
-  >
-  <a class="absolute inset-0 text-[0]" href="http://localhost:1313/posts/errors_rust/">Rust Error Handling</a>
+  <section><h4 id="git-log">git log:</h4>
+<pre><code>* --grep: 仅显示commit msg中包含指定字符串的提交。
+* -S string: 仅显示添加或删除匹配string的提交
+* -- some_dir 最后可以加上搜索的目录名，中间用-- 分隔
+</code></pre>
+<h4 id="撤回修改">撤回修改</h4>
+<ul>
+<li>commit 之后想修改： amend更改刚才的commit message</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-console" data-lang="console"><span style="display:flex;"><span>$ git commit -m <span style="color:#e6db74">&#39;initial commit&#39;</span>
+</span></span><span style="display:flex;"><span>$ git add forgotten_file
+</span></span><span style="display:flex;"><span>$ git commit --amend
+</span></span></code></pre></div><ul>
+<li>add之后想撤回：</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-console" data-lang="console"><span style="display:flex;"><span>git reset HEAD file_name
+</span></span></code></pre></div><ul>
+<li>删掉修改：</li>
+</ul>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-console" data-lang="console"><span style="display:flex;"><span>git checkout -- file_name
+</span></span></code></pre></div><ul>
+<li>fetch 和 merge 的区别： fetch 拉到本地repo但是不merge</li>
+<li>git log &ndash;oneline &ndash;decorate &ndash;graph &ndash;all 看分支情况</li>
+</ul>
 </section>
 
-
-
-
-
-<section class="relative my-10 first-of-type:mt-0 last-of-type:mb-0">
-  
-  <h2 class="!my-0 pb-1 font-bold !leading-none">Tcp_rust</h2>
-  <time class="text-sm antialiased opacity-60"
-    >Apr 27, 2024</time
-  >
-  <a class="absolute inset-0 text-[0]" href="http://localhost:1313/posts/tcp_rust/">Tcp_rust</a>
-</section>
-
-
-
-
-
-<section class="relative my-10 first-of-type:mt-0 last-of-type:mb-0">
-  
-  <h2 class="!my-0 pb-1 font-bold !leading-none">Visitor</h2>
-  <time class="text-sm antialiased opacity-60"
-    >Apr 27, 2024</time
-  >
-  <a class="absolute inset-0 text-[0]" href="http://localhost:1313/posts/visitor/">Visitor</a>
-</section>
-
-
-
-
-
-<section class="relative my-10 first-of-type:mt-0 last-of-type:mb-0">
-  
-  <h2 class="!my-0 pb-1 font-bold !leading-none">Progit</h2>
-  <time class="text-sm antialiased opacity-60"
-    >Apr 27, 2024</time
-  >
-  <a class="absolute inset-0 text-[0]" href="http://localhost:1313/posts/progit/">Progit</a>
-</section>
-
-
-
-
-
-<section class="relative my-10 first-of-type:mt-0 last-of-type:mb-0">
-  
-  <h2 class="!my-0 pb-1 font-bold !leading-none">idiomatic rust way</h2>
-  <time class="text-sm antialiased opacity-60"
-    >Apr 3, 2024</time
-  >
-  <a class="absolute inset-0 text-[0]" href="http://localhost:1313/posts/idiomatic_rust/">idiomatic rust way</a>
-</section>
-
-
-
-
-
-<section class="relative my-10 first-of-type:mt-0 last-of-type:mb-0">
-  
-  <h2 class="!my-0 pb-1 font-bold !leading-none">Rust Concurrency</h2>
-  <time class="text-sm antialiased opacity-60"
-    >Mar 31, 2024</time
-  >
-  <a class="absolute inset-0 text-[0]" href="http://localhost:1313/posts/rust-concurrency/">Rust Concurrency</a>
-</section>
-
-
-
-
-
-<section class="relative my-10 first-of-type:mt-0 last-of-type:mb-0">
-  
-  <h2 class="!my-0 pb-1 font-bold !leading-none">React</h2>
-  <time class="text-sm antialiased opacity-60"
-    >Mar 14, 2024</time
-  >
-  <a class="absolute inset-0 text-[0]" href="http://localhost:1313/posts/react/">React</a>
-</section>
-
-
-
-
-
-<section class="relative my-10 first-of-type:mt-0 last-of-type:mb-0">
-  
-  <h2 class="!my-0 pb-1 font-bold !leading-none">Cpp Concurrency</h2>
-  <time class="text-sm antialiased opacity-60"
-    >Dec 8, 2023</time
-  >
-  <a class="absolute inset-0 text-[0]" href="http://localhost:1313/posts/cpp-concurrency/">Cpp Concurrency</a>
-</section>
-
-
-
-
-
-<section class="relative my-10 first-of-type:mt-0 last-of-type:mb-0">
-  
-  <h2 class="!my-0 pb-1 font-bold !leading-none">Map Reduce 的实现</h2>
-  <time class="text-sm antialiased opacity-60"
-    >Dec 1, 2023</time
-  >
-  <a class="absolute inset-0 text-[0]" href="http://localhost:1313/posts/map-reduce/">Map Reduce 的实现</a>
-</section>
-
-
-
-
-
-<section class="relative my-10 first-of-type:mt-0 last-of-type:mb-0">
-  
-  <h2 class="!my-0 pb-1 font-bold !leading-none">Go 探究</h2>
-  <time class="text-sm antialiased opacity-60"
-    >Nov 19, 2023</time
-  >
-  <a class="absolute inset-0 text-[0]" href="http://localhost:1313/posts/go-design/">Go 探究</a>
-</section>
-
-
-
-
-<nav class="mt-16 flex">
   
   
-  <a class="btn ml-auto" href="/page/2/"
-    >Next Page →</a
-  >
-  
-</nav>
 
+  
+  
+  
+  
+  <nav class="mt-24 flex rounded-lg bg-black/[3%] text-lg dark:bg-white/[8%]">
+    
+    <a
+      class="flex w-1/2 items-center rounded-l-md p-6 pr-3 font-semibold no-underline hover:bg-black/[2%] dark:hover:bg-white/[3%]"
+      href="http://localhost:1313/posts/visitor/"
+      ><span class="mr-1.5">←</span><span>Visitor</span></a
+    >
+    
+    
+    <a
+      class="ml-auto flex w-1/2 items-center justify-end rounded-r-md p-6 pl-3 font-semibold no-underline hover:bg-black/[2%] dark:hover:bg-white/[3%]"
+      href="http://localhost:1313/posts/idiomatic_rust/"
+      ><span>idiomatic rust way</span><span class="ml-1.5">→</span></a
+    >
+    
+  </nav>
+  
+  
+
+  
+  
+
+  
+  
+
+  
+  
+</article>
 
 
     </main>
