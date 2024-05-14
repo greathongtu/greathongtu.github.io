@@ -44,7 +44,7 @@ type TaskMetadata struct {
 ```
 ## MapReduce 的执行流程
 
-1. Coordinator 启动，并初始化，监听 Worker 的RPC请求。同时要启动一个goroutine 检查超时的任务，超时的任务要重新插入人物队列。
+1. Coordinator 启动，并初始化，监听 Worker 的RPC请求。同时要启动一个goroutine 检查超时的任务，超时的任务要重新插入任务队列。
     * 两种RPC, 一个是Worker请求任务的RPC, 还有一个是Worker完成任务的通知的RPC
 2. Worker 启动，向 Coordinator 请求任务，根据返回的 task 的 Phase (Map/Reduce/Exit/Wait) 分别进行下一步操作
     * Map 阶段：读取输入文件，调用用户提供的 Map 函数，生成中间文件，然后向 Coordinator 通知任务完成
