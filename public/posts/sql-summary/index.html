@@ -30,10 +30,13 @@
 
 
 
+
+
 <html
   class="not-ready lg:text-base"
   style="--bg: #faf8f1"
   lang="en-us"
+  dir="ltr"
 >
   <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
   <meta charset="utf-8" />
@@ -53,23 +56,9 @@
   
   
   
-  <meta name="description" content="mysql 执行流程
-SQL语句 - 查询缓存 - 解析器（语法分析 语意分析） - 优化器（逻辑优化 物理优化） - 执行器
-为什么说 B&#43; 树查找行记录，最多只需1~3次磁盘IO
-InnoDB 中页大小为16KB，一个键值对大概 8B&#43;8B， 也就是一个页可以存1K个 KV pair，1K约等于1000个。 所以深度为3的 b&#43; 树索引可以维护 10^3 * 10^3 * 10^3 = 10 亿条记录。 正常每个节点不可能都填满了，所以一般 b&#43; 树高度在2到4 层。根节点在内存内，所以一般查找某一 KV 的行记录时只需1到3次磁盘IO
-InnoDB 关键特性
-
-Insert Buffer 升级为 Change Buffer
-对于非聚集索引的插入或更新操作，不是每次直接插入到索引页，而是先判断插入的非聚集索引页是否在缓冲池中，若在则直接插入；若不在，则先放入一个 Insert Buffer 对象中，然后再以一定的频率和情况进行 Insert Buffer 和辅助索引页子节点的 merge 操作。如此一来多个插入合并到一个操作中（因为在一个索引页中）。
-条件： 1. 索引是辅助索引； 2. 索引不是唯一的。
-Insert Buffer 是一个 B&#43; 树
-Double Write
-Adaptive Hash Index
-Async IO
-Flush Neighbor Page
-
-覆盖索引
-覆盖索引（covering index ，或称为索引覆盖）即从非主键索引中就能查到的记录，而不需要查询主键索引中的记录，避免了回表的产生减少了树的搜索次数，显著提升性能" />
+  <meta name="description" content="mysql 执行流程 SQL语句 - 查询缓存 - 解析器（语法分析 语意分析） - 优化器（逻辑优化 物理优化） - 执行器
+为什么说 B&#43; 树查找行记录，最多只需1~3次磁盘IO InnoDB 中页大小为16KB，一个键值对大概 8B&#43;8B， 也就是一个页可以存1K个 KV pair，1K约等于1000个。 所以深度为3的 b&#43; 树索引可以维护 10^3 * 10^3 * 10^3 = 10 亿条记录。 正常每个节点不可能都填满了，所以一般 b&#43; 树高度在2到4 层。根节点在内存内，所以一般查找某一 KV 的行记录时只需1到3次磁盘IO
+InnoDB 关键特性 Insert Buffer 升级为 Change Buffer 对于非聚集索引的插入或更新操作，不是每次直接插入到索引页，而是先判断插入的非聚集索引页是否在缓冲池中，若在则直接插入；若不在，则先放入一个 Insert Buffer 对象中，然后再以一定的频率和情况进行 Insert Buffer 和辅助索引页子节点的 merge 操作。如此一来多个插入合并到一个操作中（因为在一个索引页中）。 条件： 1. 索引是辅助索引； 2. 索引不是唯一的。 Insert Buffer 是一个 B&#43; 树 Double Write Adaptive Hash Index Async IO Flush Neighbor Page 覆盖索引 覆盖索引（covering index ，或称为索引覆盖）即从非主键索引中就能查到的记录，而不需要查询主键索引中的记录，避免了回表的产生减少了树的搜索次数，显著提升性能" />
   <meta name="author" content="greathongtu 的 Blog" />
   
 
@@ -114,11 +103,17 @@ Flush Neighbor Page
   
 
   
-  <link rel="icon" href="http://localhost:1313/favicon.ico" />
-  <link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png" />
+  <link
+    rel="icon"
+    href="http://localhost:1313/favicon.ico"
+  />
+  <link
+    rel="apple-touch-icon"
+    href="http://localhost:1313/apple-touch-icon.png"
+  />
 
   
-  <meta name="generator" content="Hugo 0.134.1">
+  <meta name="generator" content="Hugo 0.133.1">
 
   
   
@@ -126,22 +121,20 @@ Flush Neighbor Page
 </head>
 
   <body class="text-black duration-200 ease-out dark:text-white">
-    <header class="mx-auto flex h-[4.5rem] max-w-3xl px-8 lg:justify-center">
-  <div class="relative z-50 mr-auto flex items-center">
-    <a
-      class="-translate-x-[1px] -translate-y-[1px] text-2xl font-semibold"
-      href="http://localhost:1313/"
+    <header class="mx-auto flex h-[4.5rem] max-w-[--w] px-8 lg:justify-center">
+  <div class="relative z-50 ltr:mr-auto rtl:ml-auto flex items-center">
+    <a class="-translate-y-[1px] text-2xl font-medium" href="http://localhost:1313/"
       >greathongtu 的 Blog</a
     >
     <div
-      class="btn-dark text-[0] ml-4 h-6 w-6 shrink-0 cursor-pointer [background:url(./theme.png)_left_center/_auto_theme('spacing.6')_no-repeat] [transition:_background-position_0.4s_steps(5)] dark:[background-position:right]"
+      class="btn-dark text-[0] ltr:ml-4 rtl:mr-4 h-6 w-6 shrink-0 cursor-pointer [background:url(./theme.png)_left_center/_auto_theme('spacing.6')_no-repeat] [transition:_background-position_0.4s_steps(5)] dark:[background-position:right]"
       role="button"
       aria-label="Dark"
     ></div>
   </div>
 
   <div
-    class="btn-menu relative z-50 -mr-8 flex h-[4.5rem] w-[5rem] shrink-0 cursor-pointer flex-col items-center justify-center gap-2.5 lg:hidden"
+    class="btn-menu relative z-50 ltr:-mr-8 rtl:-ml-8 flex h-[4.5rem] w-[5rem] shrink-0 cursor-pointer flex-col items-center justify-center gap-2.5 lg:hidden"
     role="button"
     aria-label="Menu"
   ></div>
@@ -199,11 +192,11 @@ Flush Neighbor Page
 
     
     <nav
-      class="mt-12 flex justify-center space-x-10 dark:invert lg:ml-12 lg:mt-0 lg:items-center lg:space-x-6"
+      class="mt-12 flex justify-center space-x-10 rtl:space-x-reverse dark:invert ltr:lg:ml-14 rtl:lg:mr-14 lg:mt-0 lg:items-center"
     >
       
       <a
-        class="h-8 w-8 text-[0] [background:var(--url)_center_center/cover_no-repeat] lg:h-6 lg:w-6"
+        class="h-7 w-7 text-[0] [background:var(--url)_center_center/cover_no-repeat] lg:h-6 lg:w-6"
         style="--url: url(./github.svg)"
         href="https://github.com/greathongtu"
         target="_blank"
@@ -219,16 +212,16 @@ Flush Neighbor Page
 
 
     <main
-      class="prose prose-neutral relative mx-auto min-h-[calc(100%-9rem)] max-w-3xl px-8 pb-16 pt-12 dark:prose-invert"
+      class="prose prose-neutral relative mx-auto min-h-[calc(100%-9rem)] max-w-[--w] px-8 pb-16 pt-14 dark:prose-invert"
     >
       
 
 <article>
-  <header class="mb-16">
+  <header class="mb-14">
     <h1 class="!my-0 pb-2.5">sql 总结</h1>
 
     
-    <div class="text-sm antialiased opacity-60">
+    <div class="text-xs antialiased opacity-60">
       
       <time>Nov 17, 2023</time>
       
@@ -408,7 +401,7 @@ ReadView 主要4个重要内容： creator_trx_id, trx_ids(当前活跃的读写
   <footer class="mt-12 flex flex-wrap">
      
     <a
-      class="mb-1.5 mr-1.5 rounded-lg bg-black/[3%] px-5 py-1.5 no-underline dark:bg-white/[8%]"
+      class="mb-1.5 ltr:mr-1.5 rtl:ml-1.5 rounded-lg bg-black/[3%] px-5 py-1 no-underline hover:bg-black/[6%] dark:bg-white/[8%] dark:hover:bg-white/[12%]"
       href="http://localhost:1313/tags/sql"
       >sql</a
     >
@@ -420,19 +413,17 @@ ReadView 主要4个重要内容： creator_trx_id, trx_ids(当前活跃的读写
   
   
   
-  <nav class="mt-24 flex rounded-lg bg-black/[3%] text-lg dark:bg-white/[8%]">
+  <nav
+    class="mt-24 flex overflow-hidden rounded-xl bg-black/[3%] text-lg !leading-[1.2] *:flex *:w-1/2 *:items-center *:p-5 *:font-medium *:no-underline dark:bg-white/[8%] [&>*:hover]:bg-black/[2%] dark:[&>*:hover]:bg-white/[3%]"
+  >
     
-    <a
-      class="flex w-1/2 items-center rounded-l-md p-6 pr-3 font-semibold no-underline hover:bg-black/[2%] dark:hover:bg-white/[3%]"
-      href="http://localhost:1313/posts/go-design/"
-      ><span class="mr-1.5">←</span><span>Go 探究</span></a
+    <a class="ltr:pr-3 rtl:pl-3" href="http://localhost:1313/posts/go-design/"
+      ><span class="ltr:mr-1.5 rtl:ml-1.5">←</span><span>Go 探究</span></a
     >
     
     
-    <a
-      class="ml-auto flex w-1/2 items-center justify-end rounded-r-md p-6 pl-3 font-semibold no-underline hover:bg-black/[2%] dark:hover:bg-white/[3%]"
-      href="http://localhost:1313/posts/linux-io/"
-      ><span>Linux 网络I/O复用并发模型</span><span class="ml-1.5">→</span></a
+    <a class="ltr:ml-auto rtl:mr-auto justify-end pl-3" href="http://localhost:1313/posts/linux-io/"
+      ><span>Linux 网络I/O复用并发模型</span><span class="ltr:ml-1.5 rtl:mr-1.5">→</span></a
     >
     
   </nav>
@@ -441,20 +432,13 @@ ReadView 主要4个重要内容： creator_trx_id, trx_ids(当前活跃的读写
 
   
   
-  <div class="mt-24" id="disqus_thread"></div>
-  <script>
-    const disqusShortname = 'your-disqus-shortname';
-    const script = document.createElement('script');
-    script.src = 'https://' + disqusShortname + '.disqus.com/embed.js';
-    script.setAttribute('data-timestamp', +new Date());
-    document.head.appendChild(script);
-  </script>
-  
 
   
   
 
   
+
+
   
 </article>
 
@@ -462,21 +446,23 @@ ReadView 主要4个重要内容： creator_trx_id, trx_ids(当前活跃的读写
     </main>
 
     <footer
-  class="opaco mx-auto flex h-[4.5rem] max-w-3xl items-center px-8 text-[0.9em] opacity-60"
+  class="mx-auto flex h-[4.5rem] max-w-[--w] items-center px-8 text-xs uppercase tracking-wider opacity-60"
 >
   <div class="mr-auto">
+  
     &copy; 2024
     <a class="link" href="http://localhost:1313/">greathongtu 的 Blog</a>
+  
   </div>
   <a class="link mx-6" href="https://gohugo.io/" rel="noopener" target="_blank"
-    >Powered by Hugo️️</a
+    >powered by hugo️️</a
   >️
   <a
     class="link"
     href="https://github.com/nanxiaobei/hugo-paper"
     rel="noopener"
     target="_blank"
-    >✎ Paper</a
+    >hugo-paper</a
   >
 </footer>
 

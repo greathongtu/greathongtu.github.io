@@ -30,10 +30,13 @@
 
 
 
+
+
 <html
   class="not-ready lg:text-base"
   style="--bg: #faf8f1"
   lang="en-us"
+  dir="ltr"
 >
   <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
   <meta charset="utf-8" />
@@ -44,7 +47,7 @@
   />
 
   
-  <title>Zed Rope - greathongtu 的 Blog</title>
+  <title>Zed 编辑器中的 SumTree 和 Rope 数据结构 - greathongtu 的 Blog</title>
 
   
   <meta name="theme-color" />
@@ -53,17 +56,11 @@
   
   
   
-  <meta name="description" content="Zed 编辑器中的 SumTree 和 Rope 数据结构
-代码编辑器最重要的东西就是如何表示文本了。朴素的想法是直接使用 string 数据结构。但作为使用连续内存的数据结构，在面对中间位置的数据插入删除时代价过大。并且更复杂的跳转某行等功能也很难实现。
-合理的实现应该能将文本分成很多段，且段与段之间互不影响，这样对其中某些部分进行插入、修改、删除也不会有很大的影响。Zed 选择的是 Rope 这种数据结构。
-具体实现里，Rope 是对底层的 SumTree 的一层包装。而 SumTree 可以理解为一种特殊的 B&#43; 树，显然数据都存在叶子节点，对某些叶子节点的修改并不会影响其他大多数的节点。
-通过使用 SumTree，也可以很容易的实现并发访问等功能。
-struct Rope {
-    chunks: SumTree&lt;Chunk&gt;,
-}
-
-struct Chunk(ArrayString&lt;{ 2 * CHUNK_BASE }&gt;);
-这里 SumTree 的范型参数为 Chunk，也就是叶子节点存放的数据是 Chunk 类型 (ArrayString 来自 arrayvec 库，是存放在栈里的固定大小的 string)。这里我们首先来看 SumTree 的结构。" />
+  <meta name="description" content="代码编辑器最重要的组成部分之一就是如何高效地表示和操作文本。最朴素的想法是直接使用 string 数据结构。但作为使用连续内存的数据结构,string 在面对中间位置的数据插入删除时代价过大。并且更复杂的功能,如跳转到某行,也很难高效实现。
+一个合理的实现应该能将文本分成很多段,且段与段之间互不影响,这样对其中某些部分进行修改也不会有很大的影响。Zed 编辑器选择的是 Rope 这种数据结构。
+Rope 和 SumTree 概述 在 Zed 的具体实现中,Rope 是对底层 SumTree 的一层包装。而 SumTree 可以理解为一种特殊的 B&#43; 树,其中数据都存储在叶子节点。这种结构使得对某些叶子节点的修改并不会影响其他大多数的节点。通过使用 SumTree,也可以很容易地实现并发访问等功能。
+struct Rope { chunks: SumTree&lt;Chunk&gt;, } struct Chunk(ArrayString&lt;{ 2 * CHUNK_BASE }&gt;); 这里 SumTree 的范型参数为 Chunk，也就是叶子节点存放的数据是 Chunk 类型 (ArrayString 来自 arrayvec 库，是存放在栈里的固定大小的 string)。这里我们首先来看 SumTree 的结构。
+SumTree 的结构 struct SumTree&lt;T: Item&gt;(pub Arc&lt;Node&lt;T&gt;&gt;); enum Node&lt;T: Item&gt; { Internal { height: u8, summary: T::Summary, child_summaries: ArrayVec&lt;T::Summary, { 2 * TREE_BASE }&gt;, child_trees: ArrayVec&lt;SumTree&lt;T&gt;, { 2 * TREE_BASE }&gt;, }, Leaf { summary: T::Summary, items: ArrayVec&lt;T, { 2 * TREE_BASE }&gt;, item_summaries: ArrayVec&lt;T::Summary, { 2 * TREE_BASE }&gt;, }, } SumTree 是一棵 B&#43; 树,其中:" />
   <meta name="author" content="greathongtu 的 Blog" />
   
 
@@ -108,11 +105,17 @@ struct Chunk(ArrayString&lt;{ 2 * CHUNK_BASE }&gt;);
   
 
   
-  <link rel="icon" href="http://localhost:1313/favicon.ico" />
-  <link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png" />
+  <link
+    rel="icon"
+    href="http://localhost:1313/favicon.ico"
+  />
+  <link
+    rel="apple-touch-icon"
+    href="http://localhost:1313/apple-touch-icon.png"
+  />
 
   
-  <meta name="generator" content="Hugo 0.134.1">
+  <meta name="generator" content="Hugo 0.133.1">
 
   
   
@@ -120,22 +123,20 @@ struct Chunk(ArrayString&lt;{ 2 * CHUNK_BASE }&gt;);
 </head>
 
   <body class="text-black duration-200 ease-out dark:text-white">
-    <header class="mx-auto flex h-[4.5rem] max-w-3xl px-8 lg:justify-center">
-  <div class="relative z-50 mr-auto flex items-center">
-    <a
-      class="-translate-x-[1px] -translate-y-[1px] text-2xl font-semibold"
-      href="http://localhost:1313/"
+    <header class="mx-auto flex h-[4.5rem] max-w-[--w] px-8 lg:justify-center">
+  <div class="relative z-50 ltr:mr-auto rtl:ml-auto flex items-center">
+    <a class="-translate-y-[1px] text-2xl font-medium" href="http://localhost:1313/"
       >greathongtu 的 Blog</a
     >
     <div
-      class="btn-dark text-[0] ml-4 h-6 w-6 shrink-0 cursor-pointer [background:url(./theme.png)_left_center/_auto_theme('spacing.6')_no-repeat] [transition:_background-position_0.4s_steps(5)] dark:[background-position:right]"
+      class="btn-dark text-[0] ltr:ml-4 rtl:mr-4 h-6 w-6 shrink-0 cursor-pointer [background:url(./theme.png)_left_center/_auto_theme('spacing.6')_no-repeat] [transition:_background-position_0.4s_steps(5)] dark:[background-position:right]"
       role="button"
       aria-label="Dark"
     ></div>
   </div>
 
   <div
-    class="btn-menu relative z-50 -mr-8 flex h-[4.5rem] w-[5rem] shrink-0 cursor-pointer flex-col items-center justify-center gap-2.5 lg:hidden"
+    class="btn-menu relative z-50 ltr:-mr-8 rtl:-ml-8 flex h-[4.5rem] w-[5rem] shrink-0 cursor-pointer flex-col items-center justify-center gap-2.5 lg:hidden"
     role="button"
     aria-label="Menu"
   ></div>
@@ -193,11 +194,11 @@ struct Chunk(ArrayString&lt;{ 2 * CHUNK_BASE }&gt;);
 
     
     <nav
-      class="mt-12 flex justify-center space-x-10 dark:invert lg:ml-12 lg:mt-0 lg:items-center lg:space-x-6"
+      class="mt-12 flex justify-center space-x-10 rtl:space-x-reverse dark:invert ltr:lg:ml-14 rtl:lg:mr-14 lg:mt-0 lg:items-center"
     >
       
       <a
-        class="h-8 w-8 text-[0] [background:var(--url)_center_center/cover_no-repeat] lg:h-6 lg:w-6"
+        class="h-7 w-7 text-[0] [background:var(--url)_center_center/cover_no-repeat] lg:h-6 lg:w-6"
         style="--url: url(./github.svg)"
         href="https://github.com/greathongtu"
         target="_blank"
@@ -213,16 +214,16 @@ struct Chunk(ArrayString&lt;{ 2 * CHUNK_BASE }&gt;);
 
 
     <main
-      class="prose prose-neutral relative mx-auto min-h-[calc(100%-9rem)] max-w-3xl px-8 pb-16 pt-12 dark:prose-invert"
+      class="prose prose-neutral relative mx-auto min-h-[calc(100%-9rem)] max-w-[--w] px-8 pb-16 pt-14 dark:prose-invert"
     >
       
 
 <article>
-  <header class="mb-16">
-    <h1 class="!my-0 pb-2.5">Zed Rope</h1>
+  <header class="mb-14">
+    <h1 class="!my-0 pb-2.5">Zed 编辑器中的 SumTree 和 Rope 数据结构</h1>
 
     
-    <div class="text-sm antialiased opacity-60">
+    <div class="text-xs antialiased opacity-60">
       
       <time>Sep 6, 2024</time>
       
@@ -233,17 +234,17 @@ struct Chunk(ArrayString&lt;{ 2 * CHUNK_BASE }&gt;);
     
   </header>
 
-  <section><h1 id="zed-编辑器中的-sumtree-和-rope-数据结构">Zed 编辑器中的 SumTree 和 Rope 数据结构</h1>
-<p>代码编辑器最重要的东西就是如何表示文本了。朴素的想法是直接使用 string 数据结构。但作为使用连续内存的数据结构，在面对中间位置的数据插入删除时代价过大。并且更复杂的跳转某行等功能也很难实现。</p>
-<p>合理的实现应该能将文本分成很多段，且段与段之间互不影响，这样对其中某些部分进行插入、修改、删除也不会有很大的影响。Zed 选择的是 Rope 这种数据结构。</p>
-<p>具体实现里，Rope 是对底层的 SumTree 的一层包装。而 SumTree 可以理解为一种特殊的 B+ 树，显然数据都存在叶子节点，对某些叶子节点的修改并不会影响其他大多数的节点。
-通过使用 SumTree，也可以很容易的实现并发访问等功能。</p>
+  <section><p>代码编辑器最重要的组成部分之一就是如何高效地表示和操作文本。最朴素的想法是直接使用 string 数据结构。但作为使用连续内存的数据结构,string 在面对中间位置的数据插入删除时代价过大。并且更复杂的功能,如跳转到某行,也很难高效实现。</p>
+<p>一个合理的实现应该能将文本分成很多段,且段与段之间互不影响,这样对其中某些部分进行修改也不会有很大的影响。Zed 编辑器选择的是 Rope 这种数据结构。</p>
+<h2 id="rope-和-sumtree-概述">Rope 和 SumTree 概述</h2>
+<p>在 Zed 的具体实现中,Rope 是对底层 SumTree 的一层包装。而 SumTree 可以理解为一种特殊的 B+ 树,其中数据都存储在叶子节点。这种结构使得对某些叶子节点的修改并不会影响其他大多数的节点。通过使用 SumTree,也可以很容易地实现并发访问等功能。</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Rope</span> {
 </span></span><span style="display:flex;"><span>    chunks: <span style="color:#a6e22e">SumTree</span><span style="color:#f92672">&lt;</span>Chunk<span style="color:#f92672">&gt;</span>,
 </span></span><span style="display:flex;"><span>}
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Chunk</span>(ArrayString<span style="color:#f92672">&lt;</span>{ <span style="color:#ae81ff">2</span> <span style="color:#f92672">*</span> <span style="color:#66d9ef">CHUNK_BASE</span> }<span style="color:#f92672">&gt;</span>);
 </span></span></code></pre></div><p>这里 SumTree 的范型参数为 Chunk，也就是叶子节点存放的数据是 Chunk 类型 (ArrayString 来自 arrayvec 库，是存放在栈里的固定大小的 string)。这里我们首先来看 SumTree 的结构。</p>
+<h2 id="sumtree-的结构">SumTree 的结构</h2>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">SumTree</span><span style="color:#f92672">&lt;</span>T: <span style="color:#a6e22e">Item</span><span style="color:#f92672">&gt;</span>(<span style="color:#66d9ef">pub</span> Arc<span style="color:#f92672">&lt;</span>Node<span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;&gt;</span>);
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">enum</span> <span style="color:#a6e22e">Node</span><span style="color:#f92672">&lt;</span>T: <span style="color:#a6e22e">Item</span><span style="color:#f92672">&gt;</span> {
@@ -259,26 +260,35 @@ struct Chunk(ArrayString&lt;{ 2 * CHUNK_BASE }&gt;);
 </span></span><span style="display:flex;"><span>        item_summaries: <span style="color:#a6e22e">ArrayVec</span><span style="color:#f92672">&lt;</span>T::Summary, { <span style="color:#ae81ff">2</span> <span style="color:#f92672">*</span> <span style="color:#66d9ef">TREE_BASE</span> }<span style="color:#f92672">&gt;</span>,
 </span></span><span style="display:flex;"><span>    },
 </span></span><span style="display:flex;"><span>}
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">trait</span> Item: Clone {
+</span></span></code></pre></div><p>SumTree<!-- raw HTML omitted --> 是一棵 B+ 树,其中:</p>
+<ul>
+<li>每个叶节点包含多个 Item 类型的数据和对应每个 Item 的 Summary</li>
+<li>Leaf 的 summary 字段存放着所有 Item 的总 Summary</li>
+<li>Internal 节点包含多个子树和对应每个子树的 Summary</li>
+<li>Internal 节点的 summary 字段存放着所有子树的总 Summary</li>
+<li>height 表示该 Internal 节点的高度(叶子节点高度为0)</li>
+</ul>
+<h2 id="item-和-summary">Item 和 Summary</h2>
+<p>Item 是什么呢？Item 是存放在叶子节点的数据的真正类型（比如整个文本的一小段子串 &amp;str）。它需要实现 summary 方法返回一个 Summary 类型。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">trait</span> Item: Clone {
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Summary</span>: <span style="color:#a6e22e">Summary</span>;
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">summary</span>(<span style="color:#f92672">&amp;</span>self) -&gt; <span style="color:#a6e22e">Self</span>::Summary;
 </span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">trait</span> Summary: Default <span style="color:#f92672">+</span> Clone <span style="color:#f92672">+</span> fmt::Debug {
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Context</span>;
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">add_summary</span>(<span style="color:#f92672">&amp;</span><span style="color:#66d9ef">mut</span> self, summary: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">Self</span>, cx: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">Self</span>::Context);
 </span></span><span style="display:flex;"><span>}
-</span></span></code></pre></div><p>SumTree<!-- raw HTML omitted --> 是一棵 B+ 树，其中每个叶节点都包含多个 Item 类型的数据和对应每个 Item 的 Summary， Leaf 的 summary 字段存放着所有 Item 的总 Summary。
-Internal 节点包含多个子树和对应每个子树的 Summary， summary 字段存放着所有子树的总 Summary。height 则是该 Internal 节点的高度（叶子节点显然高度为0）。</p>
-<p>Item 是什么呢？Item 是存放在叶子节点的数据的真正类型（比如整个文本的一小段子串 &amp;str）。它需要实现 summary 方法返回一个 Summary 类型。
-这个 Summary 类型可以是一切能累加的东西。听起来很抽象，但只要知道 Summary 是用来统计整个文本或其中部分文本的一些统计信息的。
-比如：如果我想知道整个文本的长度是多少，那我需要知道每个叶子节点的数据长度是多少，最后累加得到最终的结果。
+</span></span></code></pre></div><p>Summary 类型可以是一切可累加的(associative）东西。听起来很抽象，但只要知道 Summary 是用来统计整个文本或其中部分文本的一些统计信息的。</p>
+<p>比如：如果我想知道整个文本的长度是多少，那我需要知道每个叶子节点的数据长度是多少，最后累加得到最终的结果。
 我们可以将这个长度信息通过 Summary 一层一层地传上去不断累加，最终在根节点的 summary 字段即是我们需要的结果。
 具体实现上，我们可以给 usize 实现 Summary trait，具体 add_summary 的方法便是直接对两个 usize 相加。</p>
 <p>再比如我想知道一个 string 中最大的 char 是哪个？把 add_summary 的方法实现为返回更大的那个 char 即可。</p>
-<p>实际中我们会有很多维度的信息需要统计，这时我们可以把这些维度放到一个 struct 中，在 add_summary 方法里对该 struct 的各个字段进行相应的修改即可。
-Zed 的 Rope 中的 Summary 是这样的：</p>
+<p>实际中我们会有很多维度的信息需要统计，这时我们可以把这些维度放到一个 struct 中，在 add_summary 方法里对该 struct 的各个字段进行相应的修改即可。</p>
+<h2 id="textsummary-示例">TextSummary 示例</h2>
+<p>Zed 的 Rope 中的 Summary 是这样的：</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TextSummary</span> {
 </span></span><span style="display:flex;"><span>    <span style="color:#e6db74">/// Length in UTF-8
 </span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    len: <span style="color:#66d9ef">usize</span>,
@@ -344,6 +354,84 @@ Zed 的 Rope 中的 Summary 是这样的：</p>
 </span></span><span style="display:flex;"><span>    }
 </span></span><span style="display:flex;"><span>}
 </span></span></code></pre></div><p>其中之所以需要 first_line_chars 和 last_line_chars 这两个字段，是为了统计 longest_row_chars，而同一行的内容有可能被存放在前后两个不同的节点中。</p>
+<p>这里举例说明 SumTree 的结构，以下是一段文本：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-text" data-lang="text"><span style="display:flex;"><span>Hello World!
+</span></span><span style="display:flex;"><span>This is
+</span></span><span style="display:flex;"><span>your captain speaking.
+</span></span><span style="display:flex;"><span>Are you
+</span></span><span style="display:flex;"><span>ready for take-off?
+</span></span></code></pre></div><p>根据刚才的文本构建的 SumTree 如下：
+<img src="/images/sumtree_diagram.png" alt="SumTree"></p>
+<h2 id="dimension-和-seektarget">Dimension 和 SeekTarget</h2>
+<p>有了对 SumTree 大概的理解，我们就可以深入代码研究了。在代码中我们可以发现另两个关键的 trait：Demension 和 SeekTarget。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#e6db74">/// Each [`Summary`] type can have more than one [`Dimension`] type that it measures.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">/// You can use dimensions to seek to a specific location in the [`SumTree`]
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">/// # Example:
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">/// Zed&#39;s rope has a `TextSummary` type that summarizes lines, characters, and bytes.
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74">/// Each of these are different dimensions we may want to seek to
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span><span style="color:#66d9ef">pub</span> <span style="color:#66d9ef">trait</span> Dimension<span style="color:#f92672">&lt;</span><span style="color:#a6e22e">&#39;a</span>, S: <span style="color:#a6e22e">Summary</span><span style="color:#f92672">&gt;</span>: Clone <span style="color:#f92672">+</span> fmt::Debug <span style="color:#f92672">+</span> Default {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">add_summary</span>(<span style="color:#f92672">&amp;</span><span style="color:#66d9ef">mut</span> self, _summary: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">&#39;a</span> <span style="color:#a6e22e">S</span>, _: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">S</span>::Context);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">from_summary</span>(summary: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">&#39;a</span> <span style="color:#a6e22e">S</span>, cx: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">S</span>::Context) -&gt; <span style="color:#a6e22e">Self</span> {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">let</span> <span style="color:#66d9ef">mut</span> dimension <span style="color:#f92672">=</span> Self::default();
+</span></span><span style="display:flex;"><span>        dimension.add_summary(summary, cx);
+</span></span><span style="display:flex;"><span>        dimension
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">pub</span> <span style="color:#66d9ef">trait</span> SeekTarget<span style="color:#f92672">&lt;</span><span style="color:#a6e22e">&#39;a</span>, S: <span style="color:#a6e22e">Summary</span>, D: <span style="color:#a6e22e">Dimension</span><span style="color:#f92672">&lt;</span><span style="color:#a6e22e">&#39;a</span>, S<span style="color:#f92672">&gt;&gt;</span>: <span style="color:#a6e22e">fmt</span>::Debug {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">cmp</span>(<span style="color:#f92672">&amp;</span>self, cursor_location: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">D</span>, cx: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">S</span>::Context) -&gt; <span style="color:#a6e22e">Ordering</span>;
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Dimension 是 Summary 的一个维度， SeekTarget 定义了 SumTree 的查找目标。
+你可能会问为什么有了 Summary 还需要 Dimension, 这是因为 Summary 存放的是全量的统计信息，而有时候我们只想关注其中的某个维度。
+比如在 TextSummary 中，我们可能只关心最长行的字符数而不关心总长度；或者相反。在这种情况下如果我们直接使用 Summary 的 Cursor 遍历会导致性能浪费，
+因为在遍历的过程中做了多余的计算，并且过程中累加的 Summary（或者某 Dimension）会被存在 Cursor 的 stack 字段（记录了从根节点到当前叶节点的路径）中，而我们只需要关心其中的一部分信息。</p>
+<p>我们可以使用针对某个 Dimension 的 Cursor 来遍历 SumTree，这样就可以得到一个 Dimension 的统计信息而不会有多余的计算。
+那么如果我想通过一个 Dimension 的遍历找到某个位置，同时又想得到另一个 Dimension 的信息怎么办呢？</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#75715e">// Summary is a Dimension
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">impl</span><span style="color:#f92672">&lt;</span><span style="color:#a6e22e">&#39;a</span>, T: <span style="color:#a6e22e">Summary</span><span style="color:#f92672">&gt;</span> Dimension<span style="color:#f92672">&lt;</span><span style="color:#a6e22e">&#39;a</span>, T<span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">for</span> T {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">add_summary</span>(<span style="color:#f92672">&amp;</span><span style="color:#66d9ef">mut</span> self, summary: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">&#39;a</span> <span style="color:#a6e22e">T</span>, cx: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">T</span>::Context) {
+</span></span><span style="display:flex;"><span>        Summary::add_summary(self, summary, cx);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#75715e">// Demension is a Target
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">impl</span><span style="color:#f92672">&lt;</span><span style="color:#a6e22e">&#39;a</span>, S: <span style="color:#a6e22e">Summary</span>, D: <span style="color:#a6e22e">Dimension</span><span style="color:#f92672">&lt;</span><span style="color:#a6e22e">&#39;a</span>, S<span style="color:#f92672">&gt;</span> <span style="color:#f92672">+</span> Ord<span style="color:#f92672">&gt;</span> SeekTarget<span style="color:#f92672">&lt;</span><span style="color:#a6e22e">&#39;a</span>, S, D<span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">for</span> D {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">cmp</span>(<span style="color:#f92672">&amp;</span>self, cursor_location: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">Self</span>, _: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">S</span>::Context) -&gt; <span style="color:#a6e22e">Ordering</span> {
+</span></span><span style="display:flex;"><span>        Ord::cmp(self, cursor_location)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">impl</span><span style="color:#f92672">&lt;</span><span style="color:#a6e22e">&#39;a</span>, T: <span style="color:#a6e22e">Summary</span>, D1: <span style="color:#a6e22e">Dimension</span><span style="color:#f92672">&lt;</span><span style="color:#a6e22e">&#39;a</span>, T<span style="color:#f92672">&gt;</span>, D2: <span style="color:#a6e22e">Dimension</span><span style="color:#f92672">&lt;</span><span style="color:#a6e22e">&#39;a</span>, T<span style="color:#f92672">&gt;&gt;</span> Dimension<span style="color:#f92672">&lt;</span><span style="color:#a6e22e">&#39;a</span>, T<span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">for</span> (D1, D2) {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">add_summary</span>(<span style="color:#f92672">&amp;</span><span style="color:#66d9ef">mut</span> self, summary: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">&#39;a</span> <span style="color:#a6e22e">T</span>, cx: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">T</span>::Context) {
+</span></span><span style="display:flex;"><span>        self.<span style="color:#ae81ff">0.</span>add_summary(summary, cx);
+</span></span><span style="display:flex;"><span>        self.<span style="color:#ae81ff">1.</span>add_summary(summary, cx);
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>可以看到我们为 (D1, D2) 的 tuple 实现了 Dimension trait，在这个泛型参数为 (D1, D2) 的 Cursor 的遍历过程中我们同时统计了 D1 和 D2 的信息。</p>
+<p>简单总结一下，对于一颗 SumTree，他有一种 Item 类型，这个 Item 类型对应一个 Summary 类型。
+在使用 Cursor 遍历 SumTree 时，可以通过指定一个 Summary 的子集类型来遍历去聚集，这个子集就是 Dimension。
+Cursor 可以通过 SeekTarget 来定位到某个位置，SeekTarget 也可以是一个 Dimension（至少是可以和 Dimension 进行比较）。</p>
+<h2 id="cursor-sumtree-的遍历器">Cursor: SumTree 的遍历器</h2>
+<p>上面我们提到了 Cursor，这里我们深入研究以下 Cursor 的结构。Cursor 用于遍历 SumTree，它的结构如下：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#75715e">#[derive(Clone)]</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">pub</span> <span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Cursor</span><span style="color:#f92672">&lt;</span><span style="color:#a6e22e">&#39;a</span>, T: <span style="color:#a6e22e">Item</span>, D<span style="color:#f92672">&gt;</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// root of SumTree
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    tree: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">&#39;a</span> <span style="color:#a6e22e">SumTree</span><span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// stack of nodes from root to current node
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    stack: <span style="color:#a6e22e">ArrayVec</span><span style="color:#f92672">&lt;</span>StackEntry<span style="color:#f92672">&lt;</span><span style="color:#a6e22e">&#39;a</span>, T, D<span style="color:#f92672">&gt;</span>, <span style="color:#ae81ff">16</span><span style="color:#f92672">&gt;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// D is what dimension this Cursor is currently seeking
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#75715e">// position stores the total value of D from the beginning
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    position: <span style="color:#a6e22e">D</span>,
+</span></span><span style="display:flex;"><span>    did_seek: <span style="color:#66d9ef">bool</span>,
+</span></span><span style="display:flex;"><span>    at_end: <span style="color:#66d9ef">bool</span>,
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Cursor 允许我们高效地在 SumTree 中导航和查找,同时只计算我们关心的维度的统计信息。</p>
+<h2 id="todo">TODO</h2>
+<h2 id="总结">总结</h2>
+<p>Zed 编辑器通过使用 Rope 和底层的 SumTree 数据结构，实现了高效的文本表示和操作。
+这种设计不仅允许快速的插入、删除和修改操作，还支持复杂的统计和查找功能。
+通过 Summary、Dimension 和 SeekTarget 等概念的巧妙运用，Zed 能够灵活地处理各种文本操作需求，
+同时保持良好的性能。</p>
 </section>
 
   
@@ -353,13 +441,13 @@ Zed 的 Rope 中的 Summary 是这样的：</p>
   
   
   
-  <nav class="mt-24 flex rounded-lg bg-black/[3%] text-lg dark:bg-white/[8%]">
+  <nav
+    class="mt-24 flex overflow-hidden rounded-xl bg-black/[3%] text-lg !leading-[1.2] *:flex *:w-1/2 *:items-center *:p-5 *:font-medium *:no-underline dark:bg-white/[8%] [&>*:hover]:bg-black/[2%] dark:[&>*:hover]:bg-white/[3%]"
+  >
     
     
-    <a
-      class="ml-auto flex w-1/2 items-center justify-end rounded-r-md p-6 pl-3 font-semibold no-underline hover:bg-black/[2%] dark:hover:bg-white/[3%]"
-      href="http://localhost:1313/posts/errors_rust/"
-      ><span>Rust Error Handling</span><span class="ml-1.5">→</span></a
+    <a class="ltr:ml-auto rtl:mr-auto justify-end pl-3" href="http://localhost:1313/posts/errors_rust/"
+      ><span>Rust Error Handling</span><span class="ltr:ml-1.5 rtl:mr-1.5">→</span></a
     >
     
   </nav>
@@ -368,20 +456,13 @@ Zed 的 Rope 中的 Summary 是这样的：</p>
 
   
   
-  <div class="mt-24" id="disqus_thread"></div>
-  <script>
-    const disqusShortname = 'your-disqus-shortname';
-    const script = document.createElement('script');
-    script.src = 'https://' + disqusShortname + '.disqus.com/embed.js';
-    script.setAttribute('data-timestamp', +new Date());
-    document.head.appendChild(script);
-  </script>
-  
 
   
   
 
   
+
+
   
 </article>
 
@@ -389,21 +470,23 @@ Zed 的 Rope 中的 Summary 是这样的：</p>
     </main>
 
     <footer
-  class="opaco mx-auto flex h-[4.5rem] max-w-3xl items-center px-8 text-[0.9em] opacity-60"
+  class="mx-auto flex h-[4.5rem] max-w-[--w] items-center px-8 text-xs uppercase tracking-wider opacity-60"
 >
   <div class="mr-auto">
+  
     &copy; 2024
     <a class="link" href="http://localhost:1313/">greathongtu 的 Blog</a>
+  
   </div>
   <a class="link mx-6" href="https://gohugo.io/" rel="noopener" target="_blank"
-    >Powered by Hugo️️</a
+    >powered by hugo️️</a
   >️
   <a
     class="link"
     href="https://github.com/nanxiaobei/hugo-paper"
     rel="noopener"
     target="_blank"
-    >✎ Paper</a
+    >hugo-paper</a
   >
 </footer>
 
