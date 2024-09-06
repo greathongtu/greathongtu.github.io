@@ -1,0 +1,411 @@
+<!doctype html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html
+  class="not-ready lg:text-base"
+  style="--bg: #faf8f1"
+  lang="en-us"
+>
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, shrink-to-fit=no"
+  />
+
+  
+  <title>Zed Rope - greathongtu 的 Blog</title>
+
+  
+  <meta name="theme-color" />
+
+  
+  
+  
+  
+  <meta name="description" content="Zed 编辑器中的 SumTree 和 Rope 数据结构
+代码编辑器最重要的东西就是如何表示文本了。朴素的想法是直接使用 string 数据结构。但作为使用连续内存的数据结构，在面对中间位置的数据插入删除时代价过大。并且更复杂的跳转某行等功能也很难实现。
+合理的实现应该能将文本分成很多段，且段与段之间互不影响，这样对其中某些部分进行插入、修改、删除也不会有很大的影响。Zed 选择的是 Rope 这种数据结构。
+具体实现里，Rope 是对底层的 SumTree 的一层包装。而 SumTree 可以理解为一种特殊的 B&#43; 树，显然数据都存在叶子节点，对某些叶子节点的修改并不会影响其他大多数的节点。
+通过使用 SumTree，也可以很容易的实现并发访问等功能。
+struct Rope {
+    chunks: SumTree&lt;Chunk&gt;,
+}
+
+struct Chunk(ArrayString&lt;{ 2 * CHUNK_BASE }&gt;);
+这里 SumTree 的范型参数为 Chunk，也就是叶子节点存放的数据是 Chunk 类型 (ArrayString 来自 arrayvec 库，是存放在栈里的固定大小的 string)。这里我们首先来看 SumTree 的结构。" />
+  <meta name="author" content="greathongtu 的 Blog" />
+  
+
+  
+  
+  
+  
+  
+  
+  <link rel="preload stylesheet" as="style" href="http://localhost:1313/main.min.css" />
+
+  
+  
+  
+  
+  
+  <link rel="preload" as="image" href="http://localhost:1313/theme.png" />
+
+  
+  
+  
+  
+  
+
+  
+  
+  <link rel="preload" as="image" href="http://localhost:1313/github.svg" />
+  
+  
+
+  
+  
+  <script
+    defer
+    src="http://localhost:1313/highlight.min.js"
+    onload="hljs.initHighlightingOnLoad();"
+  ></script>
+  
+
+  
+  
+  
+
+  
+  <link rel="icon" href="http://localhost:1313/favicon.ico" />
+  <link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png" />
+
+  
+  <meta name="generator" content="Hugo 0.134.1">
+
+  
+  
+  
+</head>
+
+  <body class="text-black duration-200 ease-out dark:text-white">
+    <header class="mx-auto flex h-[4.5rem] max-w-3xl px-8 lg:justify-center">
+  <div class="relative z-50 mr-auto flex items-center">
+    <a
+      class="-translate-x-[1px] -translate-y-[1px] text-2xl font-semibold"
+      href="http://localhost:1313/"
+      >greathongtu 的 Blog</a
+    >
+    <div
+      class="btn-dark text-[0] ml-4 h-6 w-6 shrink-0 cursor-pointer [background:url(./theme.png)_left_center/_auto_theme('spacing.6')_no-repeat] [transition:_background-position_0.4s_steps(5)] dark:[background-position:right]"
+      role="button"
+      aria-label="Dark"
+    ></div>
+  </div>
+
+  <div
+    class="btn-menu relative z-50 -mr-8 flex h-[4.5rem] w-[5rem] shrink-0 cursor-pointer flex-col items-center justify-center gap-2.5 lg:hidden"
+    role="button"
+    aria-label="Menu"
+  ></div>
+
+  
+
+  <script>
+    
+    const htmlClass = document.documentElement.classList;
+    setTimeout(() => {
+      htmlClass.remove('not-ready');
+    }, 10);
+
+    
+    const btnMenu = document.querySelector('.btn-menu');
+    btnMenu.addEventListener('click', () => {
+      htmlClass.toggle('open');
+    });
+
+    
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    const lightBg = '#faf8f1'.replace(/"/g, '');
+    const setDark = (isDark) => {
+      metaTheme.setAttribute('content', isDark ? '#000' : lightBg);
+      htmlClass[isDark ? 'add' : 'remove']('dark');
+      localStorage.setItem('dark', isDark);
+    };
+
+    
+    const darkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+    if (htmlClass.contains('dark')) {
+      setDark(true);
+    } else {
+      const darkVal = localStorage.getItem('dark');
+      setDark(darkVal ? darkVal === 'true' : darkScheme.matches);
+    }
+
+    
+    darkScheme.addEventListener('change', (event) => {
+      setDark(event.matches);
+    });
+
+    
+    const btnDark = document.querySelector('.btn-dark');
+    btnDark.addEventListener('click', () => {
+      setDark(localStorage.getItem('dark') !== 'true');
+    });
+  </script>
+
+  <div
+    class="nav-wrapper fixed inset-x-0 top-full z-40 flex h-full select-none flex-col justify-center pb-16 duration-200 dark:bg-black lg:static lg:h-auto lg:flex-row lg:!bg-transparent lg:pb-0 lg:transition-none"
+  >
+    
+    
+
+    
+    <nav
+      class="mt-12 flex justify-center space-x-10 dark:invert lg:ml-12 lg:mt-0 lg:items-center lg:space-x-6"
+    >
+      
+      <a
+        class="h-8 w-8 text-[0] [background:var(--url)_center_center/cover_no-repeat] lg:h-6 lg:w-6"
+        style="--url: url(./github.svg)"
+        href="https://github.com/greathongtu"
+        target="_blank"
+        rel="me"
+      >
+        github
+      </a>
+      
+    </nav>
+    
+  </div>
+</header>
+
+
+    <main
+      class="prose prose-neutral relative mx-auto min-h-[calc(100%-9rem)] max-w-3xl px-8 pb-16 pt-12 dark:prose-invert"
+    >
+      
+
+<article>
+  <header class="mb-16">
+    <h1 class="!my-0 pb-2.5">Zed Rope</h1>
+
+    
+    <div class="text-sm antialiased opacity-60">
+      
+      <time>Sep 6, 2024</time>
+      
+      
+      
+      
+    </div>
+    
+  </header>
+
+  <section><h1 id="zed-编辑器中的-sumtree-和-rope-数据结构">Zed 编辑器中的 SumTree 和 Rope 数据结构</h1>
+<p>代码编辑器最重要的东西就是如何表示文本了。朴素的想法是直接使用 string 数据结构。但作为使用连续内存的数据结构，在面对中间位置的数据插入删除时代价过大。并且更复杂的跳转某行等功能也很难实现。</p>
+<p>合理的实现应该能将文本分成很多段，且段与段之间互不影响，这样对其中某些部分进行插入、修改、删除也不会有很大的影响。Zed 选择的是 Rope 这种数据结构。</p>
+<p>具体实现里，Rope 是对底层的 SumTree 的一层包装。而 SumTree 可以理解为一种特殊的 B+ 树，显然数据都存在叶子节点，对某些叶子节点的修改并不会影响其他大多数的节点。
+通过使用 SumTree，也可以很容易的实现并发访问等功能。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Rope</span> {
+</span></span><span style="display:flex;"><span>    chunks: <span style="color:#a6e22e">SumTree</span><span style="color:#f92672">&lt;</span>Chunk<span style="color:#f92672">&gt;</span>,
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">Chunk</span>(ArrayString<span style="color:#f92672">&lt;</span>{ <span style="color:#ae81ff">2</span> <span style="color:#f92672">*</span> <span style="color:#66d9ef">CHUNK_BASE</span> }<span style="color:#f92672">&gt;</span>);
+</span></span></code></pre></div><p>这里 SumTree 的范型参数为 Chunk，也就是叶子节点存放的数据是 Chunk 类型 (ArrayString 来自 arrayvec 库，是存放在栈里的固定大小的 string)。这里我们首先来看 SumTree 的结构。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">SumTree</span><span style="color:#f92672">&lt;</span>T: <span style="color:#a6e22e">Item</span><span style="color:#f92672">&gt;</span>(<span style="color:#66d9ef">pub</span> Arc<span style="color:#f92672">&lt;</span>Node<span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;&gt;</span>);
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">enum</span> <span style="color:#a6e22e">Node</span><span style="color:#f92672">&lt;</span>T: <span style="color:#a6e22e">Item</span><span style="color:#f92672">&gt;</span> {
+</span></span><span style="display:flex;"><span>    Internal {
+</span></span><span style="display:flex;"><span>        height: <span style="color:#66d9ef">u8</span>,
+</span></span><span style="display:flex;"><span>        summary: <span style="color:#a6e22e">T</span>::Summary,
+</span></span><span style="display:flex;"><span>        child_summaries: <span style="color:#a6e22e">ArrayVec</span><span style="color:#f92672">&lt;</span>T::Summary, { <span style="color:#ae81ff">2</span> <span style="color:#f92672">*</span> <span style="color:#66d9ef">TREE_BASE</span> }<span style="color:#f92672">&gt;</span>,
+</span></span><span style="display:flex;"><span>        child_trees: <span style="color:#a6e22e">ArrayVec</span><span style="color:#f92672">&lt;</span>SumTree<span style="color:#f92672">&lt;</span>T<span style="color:#f92672">&gt;</span>, { <span style="color:#ae81ff">2</span> <span style="color:#f92672">*</span> <span style="color:#66d9ef">TREE_BASE</span> }<span style="color:#f92672">&gt;</span>,
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>    Leaf {
+</span></span><span style="display:flex;"><span>        summary: <span style="color:#a6e22e">T</span>::Summary,
+</span></span><span style="display:flex;"><span>        items: <span style="color:#a6e22e">ArrayVec</span><span style="color:#f92672">&lt;</span>T, { <span style="color:#ae81ff">2</span> <span style="color:#f92672">*</span> <span style="color:#66d9ef">TREE_BASE</span> }<span style="color:#f92672">&gt;</span>,
+</span></span><span style="display:flex;"><span>        item_summaries: <span style="color:#a6e22e">ArrayVec</span><span style="color:#f92672">&lt;</span>T::Summary, { <span style="color:#ae81ff">2</span> <span style="color:#f92672">*</span> <span style="color:#66d9ef">TREE_BASE</span> }<span style="color:#f92672">&gt;</span>,
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">trait</span> Item: Clone {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Summary</span>: <span style="color:#a6e22e">Summary</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">summary</span>(<span style="color:#f92672">&amp;</span>self) -&gt; <span style="color:#a6e22e">Self</span>::Summary;
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">trait</span> Summary: Default <span style="color:#f92672">+</span> Clone <span style="color:#f92672">+</span> fmt::Debug {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Context</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">add_summary</span>(<span style="color:#f92672">&amp;</span><span style="color:#66d9ef">mut</span> self, summary: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">Self</span>, cx: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">Self</span>::Context);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>SumTree<!-- raw HTML omitted --> 是一棵 B+ 树，其中每个叶节点都包含多个 Item 类型的数据和对应每个 Item 的 Summary， Leaf 的 summary 字段存放着所有 Item 的总 Summary。
+Internal 节点包含多个子树和对应每个子树的 Summary， summary 字段存放着所有子树的总 Summary。height 则是该 Internal 节点的高度（叶子节点显然高度为0）。</p>
+<p>Item 是什么呢？Item 是存放在叶子节点的数据的真正类型（比如整个文本的一小段子串 &amp;str）。它需要实现 summary 方法返回一个 Summary 类型。
+这个 Summary 类型可以是一切能累加的东西。听起来很抽象，但只要知道 Summary 是用来统计整个文本或其中部分文本的一些统计信息的。
+比如：如果我想知道整个文本的长度是多少，那我需要知道每个叶子节点的数据长度是多少，最后累加得到最终的结果。
+我们可以将这个长度信息通过 Summary 一层一层地传上去不断累加，最终在根节点的 summary 字段即是我们需要的结果。
+具体实现上，我们可以给 usize 实现 Summary trait，具体 add_summary 的方法便是直接对两个 usize 相加。</p>
+<p>再比如我想知道一个 string 中最大的 char 是哪个？把 add_summary 的方法实现为返回更大的那个 char 即可。</p>
+<p>实际中我们会有很多维度的信息需要统计，这时我们可以把这些维度放到一个 struct 中，在 add_summary 方法里对该 struct 的各个字段进行相应的修改即可。
+Zed 的 Rope 中的 Summary 是这样的：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">struct</span> <span style="color:#a6e22e">TextSummary</span> {
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">/// Length in UTF-8
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    len: <span style="color:#66d9ef">usize</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">/// Length in UTF-16 code units
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    len_utf16: <span style="color:#a6e22e">OffsetUtf16</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">/// A point representing the number of lines and the length of the last line
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    lines: <span style="color:#a6e22e">Point</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">/// How many `char`s are in the first line
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    first_line_chars: <span style="color:#66d9ef">u32</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">/// How many `char`s are in the last line
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    last_line_chars: <span style="color:#66d9ef">u32</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">/// How many UTF-16 code units are in the last line
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    last_line_len_utf16: <span style="color:#66d9ef">u32</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">/// The row idx of the longest row
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    longest_row: <span style="color:#66d9ef">u32</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">/// How many `char`s are in the longest row
+</span></span></span><span style="display:flex;"><span><span style="color:#e6db74"></span>    longest_row_chars: <span style="color:#66d9ef">u32</span>,
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>它是如何实现 Summary trait 的呢：</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">impl</span> sum_tree::Summary <span style="color:#66d9ef">for</span> TextSummary {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Context</span> <span style="color:#f92672">=</span> ();
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">add_summary</span>(<span style="color:#f92672">&amp;</span><span style="color:#66d9ef">mut</span> self, summary: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">Self</span>, _: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">Self</span>::Context) {
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">*</span>self <span style="color:#f92672">+=</span> summary;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">impl</span> std::ops::Add<span style="color:#f92672">&lt;</span>Self<span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">for</span> TextSummary {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Output</span> <span style="color:#f92672">=</span> Self;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">add</span>(<span style="color:#66d9ef">mut</span> self, rhs: <span style="color:#a6e22e">Self</span>) -&gt; <span style="color:#a6e22e">Self</span>::Output {
+</span></span><span style="display:flex;"><span>        AddAssign::add_assign(<span style="color:#f92672">&amp;</span><span style="color:#66d9ef">mut</span> self, <span style="color:#f92672">&amp;</span>rhs);
+</span></span><span style="display:flex;"><span>        self
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">impl</span><span style="color:#f92672">&lt;</span><span style="color:#a6e22e">&#39;a</span><span style="color:#f92672">&gt;</span> std::ops::AddAssign<span style="color:#f92672">&lt;&amp;</span><span style="color:#a6e22e">&#39;a</span> Self<span style="color:#f92672">&gt;</span> <span style="color:#66d9ef">for</span> TextSummary {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">add_assign</span>(<span style="color:#f92672">&amp;</span><span style="color:#66d9ef">mut</span> self, other: <span style="color:#66d9ef">&amp;</span><span style="color:#a6e22e">&#39;a</span> <span style="color:#a6e22e">Self</span>) {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">let</span> joined_chars <span style="color:#f92672">=</span> self.last_line_chars <span style="color:#f92672">+</span> other.first_line_chars;
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> joined_chars <span style="color:#f92672">&gt;</span> self.longest_row_chars {
+</span></span><span style="display:flex;"><span>            self.longest_row <span style="color:#f92672">=</span> self.lines.row;
+</span></span><span style="display:flex;"><span>            self.longest_row_chars <span style="color:#f92672">=</span> joined_chars;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> other.longest_row_chars <span style="color:#f92672">&gt;</span> self.longest_row_chars {
+</span></span><span style="display:flex;"><span>            self.longest_row <span style="color:#f92672">=</span> self.lines.row <span style="color:#f92672">+</span> other.longest_row;
+</span></span><span style="display:flex;"><span>            self.longest_row_chars <span style="color:#f92672">=</span> other.longest_row_chars;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> self.lines.row <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span> {
+</span></span><span style="display:flex;"><span>            self.first_line_chars <span style="color:#f92672">+=</span> other.first_line_chars;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">if</span> other.lines.row <span style="color:#f92672">==</span> <span style="color:#ae81ff">0</span> {
+</span></span><span style="display:flex;"><span>            self.last_line_chars <span style="color:#f92672">+=</span> other.first_line_chars;
+</span></span><span style="display:flex;"><span>            self.last_line_len_utf16 <span style="color:#f92672">+=</span> other.last_line_len_utf16;
+</span></span><span style="display:flex;"><span>        } <span style="color:#66d9ef">else</span> {
+</span></span><span style="display:flex;"><span>            self.last_line_chars <span style="color:#f92672">=</span> other.last_line_chars;
+</span></span><span style="display:flex;"><span>            self.last_line_len_utf16 <span style="color:#f92672">=</span> other.last_line_len_utf16;
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>        self.len <span style="color:#f92672">+=</span> other.len;
+</span></span><span style="display:flex;"><span>        self.len_utf16 <span style="color:#f92672">+=</span> other.len_utf16;
+</span></span><span style="display:flex;"><span>        self.lines <span style="color:#f92672">+=</span> other.lines;
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>其中之所以需要 first_line_chars 和 last_line_chars 这两个字段，是为了统计 longest_row_chars，而同一行的内容有可能被存放在前后两个不同的节点中。</p>
+</section>
+
+  
+  
+
+  
+  
+  
+  
+  <nav class="mt-24 flex rounded-lg bg-black/[3%] text-lg dark:bg-white/[8%]">
+    
+    
+    <a
+      class="ml-auto flex w-1/2 items-center justify-end rounded-r-md p-6 pl-3 font-semibold no-underline hover:bg-black/[2%] dark:hover:bg-white/[3%]"
+      href="http://localhost:1313/posts/errors_rust/"
+      ><span>Rust Error Handling</span><span class="ml-1.5">→</span></a
+    >
+    
+  </nav>
+  
+  
+
+  
+  
+  <div class="mt-24" id="disqus_thread"></div>
+  <script>
+    const disqusShortname = 'your-disqus-shortname';
+    const script = document.createElement('script');
+    script.src = 'https://' + disqusShortname + '.disqus.com/embed.js';
+    script.setAttribute('data-timestamp', +new Date());
+    document.head.appendChild(script);
+  </script>
+  
+
+  
+  
+
+  
+  
+</article>
+
+
+    </main>
+
+    <footer
+  class="opaco mx-auto flex h-[4.5rem] max-w-3xl items-center px-8 text-[0.9em] opacity-60"
+>
+  <div class="mr-auto">
+    &copy; 2024
+    <a class="link" href="http://localhost:1313/">greathongtu 的 Blog</a>
+  </div>
+  <a class="link mx-6" href="https://gohugo.io/" rel="noopener" target="_blank"
+    >Powered by Hugo️️</a
+  >️
+  <a
+    class="link"
+    href="https://github.com/nanxiaobei/hugo-paper"
+    rel="noopener"
+    target="_blank"
+    >✎ Paper</a
+  >
+</footer>
+
+  </body>
+</html>

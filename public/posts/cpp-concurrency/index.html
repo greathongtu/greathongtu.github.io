@@ -53,11 +53,17 @@
   
   
   
-  <meta name="description" content="#include &lt;iostream&gt; #include &lt;thread&gt; void hello() { std::cout &lt;&lt; &#34;Hello Concurrent World\n&#34;; } int main() { std::cout &lt;&lt; &#34;first main&#34; &lt;&lt; std::endl; std::thread t(hello); std::cout &lt;&lt; &#34;from main thread!&#34; &lt;&lt; std::endl; // t.join(); t.detach(); } 等待：join
-不等：detach 如后台监控线程
-精细化控制： condition variables and futures
-join之前发生exception怎么办呢：try catch. 更好的方式：RAII
-class thread_guard { std::thread &amp;t; public: explicit thread_guard(std::thread &amp;t_) : t(std::move(t_)) { if (!t.joinable()) { throw std::logic_error(“No thread”); } } ~thread_guard() { t.join(); } thread_guard(thread_guard const &amp;) = delete; thread_guard &amp;operator=(thread_guard const &amp;) = delete; }; // usage std::thread t(my_func); thread_guard g(t); 向thread对象传参的时候要注意隐式类型转换：" />
+  <meta name="description" content="#include &lt;iostream&gt;
+#include &lt;thread&gt;
+void hello() { std::cout &lt;&lt; &#34;Hello Concurrent World\n&#34;; }
+int main() {
+  std::cout &lt;&lt; &#34;first main&#34; &lt;&lt; std::endl;
+  std::thread t(hello);
+  std::cout &lt;&lt; &#34;from main thread!&#34; &lt;&lt; std::endl;
+  // t.join();
+  t.detach();
+}
+" />
   <meta name="author" content="greathongtu 的 Blog" />
   
 
@@ -106,7 +112,7 @@ class thread_guard { std::thread &amp;t; public: explicit thread_guard(std::thre
   <link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png" />
 
   
-  <meta name="generator" content="Hugo 0.125.4">
+  <meta name="generator" content="Hugo 0.134.1">
 
   
   
@@ -614,6 +620,15 @@ members</p>
   
 
   
+  
+  <div class="mt-24" id="disqus_thread"></div>
+  <script>
+    const disqusShortname = 'your-disqus-shortname';
+    const script = document.createElement('script');
+    script.src = 'https://' + disqusShortname + '.disqus.com/embed.js';
+    script.setAttribute('data-timestamp', +new Date());
+    document.head.appendChild(script);
+  </script>
   
 
   

@@ -54,12 +54,21 @@
   
   
   <meta name="description" content="从第一性原理推导Rust Error:
-One API error, three stakeholders: Users, Programmers, machines.
-model errors first step enum Falliable&lt;T&gt; { Ok(T), Err } second step improve error reporting capabilities
-enum Falliable&lt;T&gt; { Ok(T), Err(String), } third step provide different error messages to users and programmers
-enum Falliable&lt;T&gt; { Ok(T), Err { user_report: String, programmer_report: String, } } forth step provide a stable contract to enable control flow
-增加泛型参数Error
-enum Falliable&lt;T, Error&gt; { Ok(T), Err { user_report: String, programmer_report: String, error: Error, } } for example:" />
+One API error, three stakeholders:
+Users, Programmers, machines.
+model errors
+first step
+enum Falliable&lt;T&gt; {
+  Ok(T),
+  Err
+}
+second step
+improve error reporting capabilities
+enum Falliable&lt;T&gt; {
+  Ok(T),
+  Err(String),
+}
+" />
   <meta name="author" content="greathongtu 的 Blog" />
   
 
@@ -108,7 +117,7 @@ enum Falliable&lt;T, Error&gt; { Ok(T), Err { user_report: String, programmer_re
   <link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png" />
 
   
-  <meta name="generator" content="Hugo 0.125.4">
+  <meta name="generator" content="Hugo 0.134.1">
 
   
   
@@ -337,6 +346,12 @@ derive Debug, impl Display and fn source().</p>
   
   <nav class="mt-24 flex rounded-lg bg-black/[3%] text-lg dark:bg-white/[8%]">
     
+    <a
+      class="flex w-1/2 items-center rounded-l-md p-6 pr-3 font-semibold no-underline hover:bg-black/[2%] dark:hover:bg-white/[3%]"
+      href="http://localhost:1313/posts/zed-rope/"
+      ><span class="mr-1.5">←</span><span>Zed Rope</span></a
+    >
+    
     
     <a
       class="ml-auto flex w-1/2 items-center justify-end rounded-r-md p-6 pl-3 font-semibold no-underline hover:bg-black/[2%] dark:hover:bg-white/[3%]"
@@ -349,6 +364,15 @@ derive Debug, impl Display and fn source().</p>
   
 
   
+  
+  <div class="mt-24" id="disqus_thread"></div>
+  <script>
+    const disqusShortname = 'your-disqus-shortname';
+    const script = document.createElement('script');
+    script.src = 'https://' + disqusShortname + '.disqus.com/embed.js';
+    script.setAttribute('data-timestamp', +new Date());
+    document.head.appendChild(script);
+  </script>
   
 
   

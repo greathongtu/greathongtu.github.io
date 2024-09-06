@@ -53,10 +53,25 @@
   
   
   
-  <meta name="description" content="问题 win11 使用 vs code 连接 wsl 的时候，一些 vs code 的拓展无法连接网络，报错： Failed to establish a socket connection to proxies: [&quot;PROXY 127.0.0.1:7890&quot;]
+  <meta name="description" content="问题
+win11 使用 vs code 连接 wsl 的时候，一些 vs code 的拓展无法连接网络，报错：
+Failed to establish a socket connection to proxies: [&quot;PROXY 127.0.0.1:7890&quot;]
 或者 go build 因为网络问题无法继续。
-原因 Windows 开启 Clash 之后，Windows 系统代理一般被设置为 127.0.0.1:7890，VS Code 会继承这个代理设置，wsl 中的 vscode-server 也继承了这个代理设置。但是 wsl 在 127.0.0.1:7890 上并没有代理服务，导致 vscode-server 联网失败。所以 wsl 中正确设置 “http_proxy” 和 “https_proxy” 环境变量可以解决问题。
-解决办法 在 wsl 中正确设置 path # ~/.bashrc # 获取 Host IP WINDOWS_IP=$(ip route | grep default | awk &#39;{print $3}&#39;) PROXY_HTTP=&#34;http://${WINDOWS_IP}:7890&#34; # 设置环境变量 export http_proxy=&#34;${PROXY_HTTP}&#34; export https_proxy=&#34;${PROXY_HTTP}&#34; # ~/." />
+原因
+Windows 开启 Clash 之后，Windows 系统代理一般被设置为 127.0.0.1:7890，VS Code 会继承这个代理设置，wsl 中的 vscode-server 也继承了这个代理设置。但是 wsl 在 127.0.0.1:7890 上并没有代理服务，导致 vscode-server 联网失败。所以 wsl 中正确设置 “http_proxy” 和 “https_proxy” 环境变量可以解决问题。
+解决办法
+
+在 wsl 中正确设置 path
+
+# ~/.bashrc
+
+# 获取 Host IP
+WINDOWS_IP=$(ip route | grep default | awk &#39;{print $3}&#39;)
+PROXY_HTTP=&#34;http://${WINDOWS_IP}:7890&#34;
+# 设置环境变量
+export http_proxy=&#34;${PROXY_HTTP}&#34;
+export https_proxy=&#34;${PROXY_HTTP}&#34;
+" />
   <meta name="author" content="greathongtu 的 Blog" />
   
 
@@ -105,7 +120,7 @@
   <link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png" />
 
   
-  <meta name="generator" content="Hugo 0.125.4">
+  <meta name="generator" content="Hugo 0.134.1">
 
   
   
@@ -301,6 +316,15 @@
   
 
   
+  
+  <div class="mt-24" id="disqus_thread"></div>
+  <script>
+    const disqusShortname = 'your-disqus-shortname';
+    const script = document.createElement('script');
+    script.src = 'https://' + disqusShortname + '.disqus.com/embed.js';
+    script.setAttribute('data-timestamp', +new Date());
+    document.head.appendChild(script);
+  </script>
   
 
   

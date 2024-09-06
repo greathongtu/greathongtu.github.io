@@ -53,8 +53,74 @@
   
   
   
-  <meta name="description" content="Vistor 模式通过双重分发(double dispatch) 来实现在不更改（不添加新的编译时操作）Element类层次结构的前提下，在运行时透明地为类层次结构上的各个类动态添加新的操作。 Double Dispatch: 第一个为accept方法的多态辨析（哪个element调用的accept）；第二个为visitElementX方法的多态辨析（哪个visitor）。 Vistor 模式的最大缺点在于拓展类层次结构（增加新的Element 子类）会导致 Visitor 类的改变。因此 Visitor 模式适用于“Element 类层次结构稳定，而其中的操作却经常面临频繁改动”。 C&#43;&#43; 代码示例：
-#include &lt;iostream&gt; #include &lt;array&gt; using namespace std; class class_a; class class_b; class Visitor { public: virtual void visit_a(class_a* element_a) = 0; virtual void visit_b(class_b* element_b) = 0; }; class Component { public: virtual void accept(Visitor* visitor) = 0; }; class class_a : public Component { void accept(Visitor* visitor) override { visitor-&gt;visit_a(this); } }; class class_b : public Component { void accept(Visitor* visitor) override { visitor-&gt;visit_b(this); } }; // 在此之上是稳定不变的部分 // ==================================== // 在此之下是变化的部分 class MyVisitor1 : public Visitor { void visit_a(class_a* ea) { cout &lt;&lt; &#34;MyVisitor1 visit_a&#34; &lt;&lt; endl; } void visit_b(class_b* eb) { cout &lt;&lt; &#34;MyVisitor1 visit_b&#34; &lt;&lt; endl; } }; class MyVisitor2 : public Visitor { void visit_a(class_a* ea) { cout &lt;&lt; &#34;MyVisitor2 visit_a&#34; &lt;&lt; endl; } void visit_b(class_b* eb) { cout &lt;&lt; &#34;MyVisitor2 visit_b&#34; &lt;&lt; endl; } }; int main() { std::array&lt;Component *, 2&gt; components = {new class_a, new class_b}; Visitor* v1 = new MyVisitor1; Visitor* v2 = new MyVisitor2; for (auto* pc : components) { pc-&gt;accept(v1); pc-&gt;accept(v2); } } Rust 代码示例：" />
+  <meta name="description" content="
+Vistor 模式通过双重分发(double dispatch) 来实现在不更改（不添加新的编译时操作）Element类层次结构的前提下，在运行时透明地为类层次结构上的各个类动态添加新的操作。
+Double Dispatch: 第一个为accept方法的多态辨析（哪个element调用的accept）；第二个为visitElementX方法的多态辨析（哪个visitor）。
+Vistor 模式的最大缺点在于拓展类层次结构（增加新的Element 子类）会导致 Visitor 类的改变。因此 Visitor 模式适用于“Element 类层次结构稳定，而其中的操作却经常面临频繁改动”。
+
+C&#43;&#43; 代码示例：
+#include &lt;iostream&gt;
+#include &lt;array&gt;
+
+using namespace std;
+class class_a;
+class class_b;
+
+class Visitor {
+public:
+  virtual void visit_a(class_a* element_a) = 0;
+  virtual void visit_b(class_b* element_b) = 0;
+};
+
+class Component {
+public:
+  virtual void accept(Visitor* visitor) = 0;
+};
+
+class class_a : public Component {
+  void accept(Visitor* visitor) override {
+    visitor-&gt;visit_a(this);
+  }
+};
+
+class class_b : public Component {
+  void accept(Visitor* visitor) override {
+    visitor-&gt;visit_b(this);
+  }
+};
+
+// 在此之上是稳定不变的部分
+// ====================================
+// 在此之下是变化的部分
+
+class MyVisitor1 : public Visitor {
+  void visit_a(class_a* ea) {
+    cout &lt;&lt; &#34;MyVisitor1 visit_a&#34; &lt;&lt; endl;
+  }
+  void visit_b(class_b* eb) {
+    cout &lt;&lt; &#34;MyVisitor1 visit_b&#34; &lt;&lt; endl;
+  }
+};
+
+class MyVisitor2 : public Visitor {
+  void visit_a(class_a* ea) {
+    cout &lt;&lt; &#34;MyVisitor2 visit_a&#34; &lt;&lt; endl;
+  }
+  void visit_b(class_b* eb) {
+    cout &lt;&lt; &#34;MyVisitor2 visit_b&#34; &lt;&lt; endl;
+  }
+};
+
+int main() {
+  std::array&lt;Component *, 2&gt; components = {new class_a, new class_b};
+  Visitor* v1 = new MyVisitor1;
+  Visitor* v2 = new MyVisitor2;
+  for (auto* pc : components) {
+    pc-&gt;accept(v1);
+    pc-&gt;accept(v2);
+  }
+}
+" />
   <meta name="author" content="greathongtu 的 Blog" />
   
 
@@ -103,7 +169,7 @@
   <link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png" />
 
   
-  <meta name="generator" content="Hugo 0.125.4">
+  <meta name="generator" content="Hugo 0.134.1">
 
   
   
@@ -372,6 +438,15 @@
   
 
   
+  
+  <div class="mt-24" id="disqus_thread"></div>
+  <script>
+    const disqusShortname = 'your-disqus-shortname';
+    const script = document.createElement('script');
+    script.src = 'https://' + disqusShortname + '.disqus.com/embed.js';
+    script.setAttribute('data-timestamp', +new Date());
+    document.head.appendChild(script);
+  </script>
   
 
   

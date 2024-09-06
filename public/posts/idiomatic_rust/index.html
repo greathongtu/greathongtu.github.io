@@ -53,9 +53,18 @@
   
   
   
-  <meta name="description" content="遍历可遍历对象(Iterator) The core of Iterator：
-trait Iterator { type Item; fn next(&amp;mut self) -&gt; Option&lt;Self::Item&gt;; } for 循环是迭代器的语法糖
-普通方式： for i in 1..10 { println!(&#34;{}&#34;, i); } 遍历数组： // 数组实现了 IntoIterator trait，隐式调用into_iter() method let arr = [1, 2, 3]; for i in arr { println!(&#34;{i}&#34;); } // enumerate let v = vec![100, 32, 57]; for (i, v) in v.iter().enumerate() { println!(&#34;{} is {}&#34;, i, v); } 链式方法调用 into_iter 会夺走所有权 iter 是借用 iter_mut 是可变借用 let v1: Vec&lt;i32&gt; = vec!" />
+  <meta name="description" content="遍历可遍历对象(Iterator)
+The core of Iterator：
+trait Iterator {
+    type Item;
+    fn next(&amp;mut self) -&gt; Option&lt;Self::Item&gt;;
+}
+for 循环是迭代器的语法糖
+普通方式：
+for i in 1..10 {
+	println!(&#34;{}&#34;, i);
+}
+" />
   <meta name="author" content="greathongtu 的 Blog" />
   
 
@@ -104,7 +113,7 @@ trait Iterator { type Item; fn next(&amp;mut self) -&gt; Option&lt;Self::Item&gt
   <link rel="apple-touch-icon" href="http://localhost:1313/apple-touch-icon.png" />
 
   
-  <meta name="generator" content="Hugo 0.125.4">
+  <meta name="generator" content="Hugo 0.134.1">
 
   
   
@@ -291,6 +300,15 @@ trait Iterator { type Item; fn next(&amp;mut self) -&gt; Option&lt;Self::Item&gt
   
 
   
+  
+  <div class="mt-24" id="disqus_thread"></div>
+  <script>
+    const disqusShortname = 'your-disqus-shortname';
+    const script = document.createElement('script');
+    script.src = 'https://' + disqusShortname + '.disqus.com/embed.js';
+    script.setAttribute('data-timestamp', +new Date());
+    document.head.appendChild(script);
+  </script>
   
 
   
