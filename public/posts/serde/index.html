@@ -1,0 +1,404 @@
+<!doctype html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html
+  class="not-ready lg:text-base"
+  style="--bg: #faf8f1"
+  lang="en-us"
+  dir="ltr"
+>
+  <head><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, shrink-to-fit=no"
+  />
+
+  
+  <title>Serde - greathongtu 的 Blog</title>
+
+  
+  <meta name="theme-color" />
+
+  
+  
+  
+  
+  <meta name="description" content="序列化过程
+首先通过 macro 为 struct 实现 impl Serialize。 在 impl 的 serialize 方法里，通过了解的结构信息（struct 有哪些 field，field 具体名称和类型等信息）调用对应的 Serializer 的方法。
+也就是说 Serialize 负责控制如何将 Rust 数据结构转变为 serde data model（并不是真正的转变，只是控制如何转变：也就是如何调用 Serializer）。Serializer 负责具体执行（如serialize_i32, serialize_struct 方法等），将 serde data model 转变为具体的目标 format。
+其中 Serializer 的实现一般在另一个库如 serde_json 里。 这也是为什么说 serde 库并不是 parse 库。
+impl _serde::Serialize for Test {
+    fn serialize&lt;__S&gt;(
+        &amp;self,
+        __serializer: __S,
+    ) -&gt; _serde::__private::Result&lt;__S::Ok, __S::Error&gt;
+    where
+        __S: _serde::Serializer,
+    {
+        let mut __serde_state = _serde::Serializer::serialize_struct(
+            __serializer,
+            &#34;Test&#34;,
+            false as usize &#43; 1 &#43; 1,
+        )?;
+        _serde::ser::SerializeStruct::serialize_field(
+            &amp;mut __serde_state,
+            &#34;test_num&#34;,
+            &amp;self.test_num,
+        )?;
+        _serde::ser::SerializeStruct::serialize_field(
+            &amp;mut __serde_state,
+            &#34;test_str&#34;,
+            &amp;self.test_str,
+        )?;
+        _serde::ser::SerializeStruct::end(__serde_state)
+    }
+}
+反序列化过程
+首先通过 macro 为 struct 实现 impl Deserialize。 在 impl 的 deserialize 方法内，通过了解的信息调用相应的 deserializer_xxx 方法，对于 json 这样的自描述格式，直接调用 deserializer_any 方法就可以。同时还传递了一个 Visitor 进去，用来进行真正的反序列化工作。Visitor 的 associated type 就是最终反序列化的目标 Rust 数据结构格式，实现了 visit_seq、 visit_map 等方法用来给 Deserializer 调用。" />
+  <meta name="author" content="greathongtu 的 Blog" />
+  
+
+  
+  
+  
+  
+  
+  
+  <link rel="preload stylesheet" as="style" href="http://localhost:1313/main.min.css" />
+
+  
+  
+  
+  
+  
+  <link rel="preload" as="image" href="http://localhost:1313/theme.png" />
+
+  
+  
+  
+  
+  
+
+  
+  
+  <link rel="preload" as="image" href="http://localhost:1313/github.svg" />
+  
+  
+
+  
+  
+  <script
+    defer
+    src="http://localhost:1313/highlight.min.js"
+    onload="hljs.initHighlightingOnLoad();"
+  ></script>
+  
+
+  
+  
+  
+
+  
+  <link
+    rel="icon"
+    href="http://localhost:1313/favicon.ico"
+  />
+  <link
+    rel="apple-touch-icon"
+    href="http://localhost:1313/apple-touch-icon.png"
+  />
+
+  
+  <meta name="generator" content="Hugo 0.145.0">
+
+  
+  
+  
+</head>
+
+  <body class="text-black duration-200 ease-out dark:text-white">
+    <header class="mx-auto flex h-[4.5rem] max-w-[--w] px-8 lg:justify-center">
+  <div class="relative z-50 ltr:mr-auto rtl:ml-auto flex items-center">
+    <a class="-translate-y-[1px] text-2xl font-medium" href="http://localhost:1313/"
+      >greathongtu 的 Blog</a
+    >
+    <div
+      class="btn-dark text-[0] ltr:ml-4 rtl:mr-4 h-6 w-6 shrink-0 cursor-pointer [background:url(./theme.png)_left_center/_auto_theme('spacing.6')_no-repeat] [transition:_background-position_0.4s_steps(5)] dark:[background-position:right]"
+      role="button"
+      aria-label="Dark"
+    ></div>
+  </div>
+
+  <div
+    class="btn-menu relative z-50 ltr:-mr-8 rtl:-ml-8 flex h-[4.5rem] w-[5rem] shrink-0 cursor-pointer flex-col items-center justify-center gap-2.5 lg:hidden"
+    role="button"
+    aria-label="Menu"
+  ></div>
+
+  
+
+  <script>
+    
+    const htmlClass = document.documentElement.classList;
+    setTimeout(() => {
+      htmlClass.remove('not-ready');
+    }, 10);
+
+    
+    const btnMenu = document.querySelector('.btn-menu');
+    btnMenu.addEventListener('click', () => {
+      htmlClass.toggle('open');
+    });
+
+    
+    const metaTheme = document.querySelector('meta[name="theme-color"]');
+    const lightBg = '#faf8f1'.replace(/"/g, '');
+    const setDark = (isDark) => {
+      metaTheme.setAttribute('content', isDark ? '#000' : lightBg);
+      htmlClass[isDark ? 'add' : 'remove']('dark');
+      localStorage.setItem('dark', isDark);
+    };
+
+    
+    const darkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+    if (htmlClass.contains('dark')) {
+      setDark(true);
+    } else {
+      const darkVal = localStorage.getItem('dark');
+      setDark(darkVal ? darkVal === 'true' : darkScheme.matches);
+    }
+
+    
+    darkScheme.addEventListener('change', (event) => {
+      setDark(event.matches);
+    });
+
+    
+    const btnDark = document.querySelector('.btn-dark');
+    btnDark.addEventListener('click', () => {
+      setDark(localStorage.getItem('dark') !== 'true');
+    });
+  </script>
+
+  <div
+    class="nav-wrapper fixed inset-x-0 top-full z-40 flex h-full select-none flex-col justify-center pb-16 duration-200 dark:bg-black lg:static lg:h-auto lg:flex-row lg:!bg-transparent lg:pb-0 lg:transition-none"
+  >
+    
+    
+
+    
+    <nav
+      class="mt-12 flex justify-center space-x-10 rtl:space-x-reverse dark:invert ltr:lg:ml-14 rtl:lg:mr-14 lg:mt-0 lg:items-center"
+    >
+      
+      <a
+        class="h-7 w-7 text-[0] [background:var(--url)_center_center/cover_no-repeat] lg:h-6 lg:w-6"
+        style="--url: url(./github.svg)"
+        href="https://github.com/greathongtu"
+        target="_blank"
+        rel="me"
+      >
+        github
+      </a>
+      
+    </nav>
+    
+  </div>
+</header>
+
+
+    <main
+      class="prose prose-neutral relative mx-auto min-h-[calc(100%-9rem)] max-w-[--w] px-8 pb-16 pt-14 dark:prose-invert"
+    >
+      
+
+<article>
+  <header class="mb-14">
+    <h1 class="!my-0 pb-2.5">Serde</h1>
+
+    
+    <div class="text-xs antialiased opacity-60">
+      
+      <time>Feb 24, 2025</time>
+      
+      
+      
+      
+    </div>
+    
+  </header>
+
+  <section><h2 id="序列化过程">序列化过程</h2>
+<p>首先通过 macro 为 struct 实现 impl Serialize。 在 impl 的 serialize 方法里，通过了解的结构信息（struct 有哪些 field，field 具体名称和类型等信息）调用对应的 Serializer 的方法。
+也就是说 Serialize 负责控制如何将 Rust 数据结构转变为 serde data model（并不是真正的转变，只是控制如何转变：也就是如何调用 Serializer）。Serializer 负责具体执行（如serialize_i32, serialize_struct 方法等），将 serde data model 转变为具体的目标 format。
+其中 Serializer 的实现一般在另一个库如 serde_json 里。 这也是为什么说 serde 库并不是 parse 库。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#66d9ef">impl</span> _serde::Serialize <span style="color:#66d9ef">for</span> Test {
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">serialize</span><span style="color:#f92672">&lt;</span>__S<span style="color:#f92672">&gt;</span>(
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&amp;</span>self,
+</span></span><span style="display:flex;"><span>        __serializer: <span style="color:#a6e22e">__S</span>,
+</span></span><span style="display:flex;"><span>    ) -&gt; <span style="color:#a6e22e">_serde</span>::__private::Result<span style="color:#f92672">&lt;</span>__S::Ok, __S::Error<span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">where</span>
+</span></span><span style="display:flex;"><span>        __S: <span style="color:#a6e22e">_serde</span>::Serializer,
+</span></span><span style="display:flex;"><span>    {
+</span></span><span style="display:flex;"><span>        <span style="color:#66d9ef">let</span> <span style="color:#66d9ef">mut</span> __serde_state <span style="color:#f92672">=</span> _serde::Serializer::serialize_struct(
+</span></span><span style="display:flex;"><span>            __serializer,
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#34;Test&#34;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">false</span> <span style="color:#66d9ef">as</span> <span style="color:#66d9ef">usize</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span> <span style="color:#f92672">+</span> <span style="color:#ae81ff">1</span>,
+</span></span><span style="display:flex;"><span>        )<span style="color:#f92672">?</span>;
+</span></span><span style="display:flex;"><span>        _serde::ser::SerializeStruct::serialize_field(
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">&amp;</span><span style="color:#66d9ef">mut</span> __serde_state,
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#34;test_num&#34;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">&amp;</span>self.test_num,
+</span></span><span style="display:flex;"><span>        )<span style="color:#f92672">?</span>;
+</span></span><span style="display:flex;"><span>        _serde::ser::SerializeStruct::serialize_field(
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">&amp;</span><span style="color:#66d9ef">mut</span> __serde_state,
+</span></span><span style="display:flex;"><span>            <span style="color:#e6db74">&#34;test_str&#34;</span>,
+</span></span><span style="display:flex;"><span>            <span style="color:#f92672">&amp;</span>self.test_str,
+</span></span><span style="display:flex;"><span>        )<span style="color:#f92672">?</span>;
+</span></span><span style="display:flex;"><span>        _serde::ser::SerializeStruct::end(__serde_state)
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><h2 id="反序列化过程">反序列化过程</h2>
+<p>首先通过 macro 为 struct 实现 impl Deserialize。 在 impl 的 deserialize 方法内，通过了解的信息调用相应的 deserializer_xxx 方法，对于 json 这样的自描述格式，直接调用 deserializer_any 方法就可以。同时还传递了一个 Visitor 进去，用来进行真正的反序列化工作。Visitor 的 associated type 就是最终反序列化的目标 Rust 数据结构格式，实现了 visit_seq、 visit_map 等方法用来给 Deserializer 调用。</p>
+<p>Visitor 是 Deserialize 这一侧实现的，用来将 serde data model 转变为 Rust 数据结构。Vistor 的调用者 deserializer.deserializer_xxx 是 Deserializer 这一侧实现的，一般在另一个库如 serde_json 里，用来将不同的具体 format 转变为 serde data model。</p>
+<p>还有辅助 FieldVisitor 的实现，用来帮助获取 map 的 key 信息。</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#75715e">// Deserialize::deserialize 方法
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">const</span> <span style="color:#66d9ef">FIELDS</span>: <span style="color:#66d9ef">&amp;</span>&#39;static [<span style="color:#f92672">&amp;</span>&#39;static <span style="color:#66d9ef">str</span>] <span style="color:#f92672">=</span> <span style="color:#f92672">&amp;</span>[
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;test_num&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;test_str&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;test_vector&#34;</span>,
+</span></span><span style="display:flex;"><span>];
+</span></span><span style="display:flex;"><span>_serde::Deserializer::deserialize_struct(
+</span></span><span style="display:flex;"><span>    __deserializer,
+</span></span><span style="display:flex;"><span>    <span style="color:#e6db74">&#34;Test&#34;</span>,
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">FIELDS</span>,
+</span></span><span style="display:flex;"><span>    __Visitor {
+</span></span><span style="display:flex;"><span>        marker: <span style="color:#a6e22e">_serde</span>::__private::PhantomData::<span style="color:#f92672">&lt;</span>Test<span style="color:#f92672">&gt;</span>,
+</span></span><span style="display:flex;"><span>        lifetime: <span style="color:#a6e22e">_serde</span>::__private::PhantomData,
+</span></span><span style="display:flex;"><span>    },
+</span></span><span style="display:flex;"><span>)
+</span></span></code></pre></div><div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-rust" data-lang="rust"><span style="display:flex;"><span><span style="color:#75715e">// serde_json 的 deserialize_map 方法
+</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">fn</span> <span style="color:#a6e22e">deserialize_map</span><span style="color:#f92672">&lt;</span>V<span style="color:#f92672">&gt;</span>(self, visitor: <span style="color:#a6e22e">V</span>) -&gt; Result<span style="color:#f92672">&lt;</span>V::Value<span style="color:#f92672">&gt;</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">where</span>
+</span></span><span style="display:flex;"><span>    V: <span style="color:#a6e22e">de</span>::Visitor<span style="color:#f92672">&lt;</span><span style="color:#a6e22e">&#39;de</span><span style="color:#f92672">&gt;</span>,
+</span></span><span style="display:flex;"><span>{
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> peek <span style="color:#f92672">=</span> <span style="color:#66d9ef">match</span> tri!(self.parse_whitespace()) {
+</span></span><span style="display:flex;"><span>        Some(b) <span style="color:#f92672">=&gt;</span> b,
+</span></span><span style="display:flex;"><span>        None <span style="color:#f92672">=&gt;</span> {
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">return</span> Err(self.peek_error(ErrorCode::EofWhileParsingValue));
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>    };
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">let</span> value <span style="color:#f92672">=</span> <span style="color:#66d9ef">match</span> peek {
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">b</span><span style="color:#e6db74">&#39;{&#39;</span> <span style="color:#f92672">=&gt;</span> {
+</span></span><span style="display:flex;"><span>            check_recursion! {
+</span></span><span style="display:flex;"><span>                self.eat_char();
+</span></span><span style="display:flex;"><span>                <span style="color:#66d9ef">let</span> ret <span style="color:#f92672">=</span> visitor.visit_map(MapAccess::new(self));
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>            <span style="color:#66d9ef">match</span> (ret, self.end_map()) {
+</span></span><span style="display:flex;"><span>                (Ok(ret), Ok(())) <span style="color:#f92672">=&gt;</span> Ok(ret),
+</span></span><span style="display:flex;"><span>                (Err(err), _) <span style="color:#f92672">|</span> (_, Err(err)) <span style="color:#f92672">=&gt;</span> Err(err),
+</span></span><span style="display:flex;"><span>            }
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        _ <span style="color:#f92672">=&gt;</span> Err(self.peek_invalid_type(<span style="color:#f92672">&amp;</span>visitor)),
+</span></span><span style="display:flex;"><span>    };
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>    <span style="color:#66d9ef">match</span> value {
+</span></span><span style="display:flex;"><span>        Ok(value) <span style="color:#f92672">=&gt;</span> Ok(value),
+</span></span><span style="display:flex;"><span>        Err(err) <span style="color:#f92672">=&gt;</span> Err(self.fix_position(err)),
+</span></span><span style="display:flex;"><span>    }
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div></section>
+
+  
+  
+
+  
+  
+  
+  
+  <nav
+    class="mt-24 flex overflow-hidden rounded-xl bg-black/[3%] text-lg !leading-[1.2] *:flex *:w-1/2 *:items-center *:p-5 *:font-medium *:no-underline dark:bg-white/[8%] [&>*:hover]:bg-black/[2%] dark:[&>*:hover]:bg-white/[3%]"
+  >
+    
+    
+    <a class="ltr:ml-auto rtl:mr-auto justify-end pl-3" href="http://localhost:1313/posts/zed-rope/"
+      ><span>Zed 编辑器中的 SumTree 和 Rope 数据结构</span><span class="ltr:ml-1.5 rtl:mr-1.5">→</span></a
+    >
+    
+  </nav>
+  
+  
+
+  
+  
+
+  
+  
+
+  
+
+
+  
+</article>
+
+
+    </main>
+
+    <footer
+  class="mx-auto flex h-[4.5rem] max-w-[--w] items-center px-8 text-xs uppercase tracking-wider opacity-60"
+>
+  <div class="mr-auto">
+  
+    &copy; 2025
+    <a class="link" href="http://localhost:1313/">greathongtu 的 Blog</a>
+  
+  </div>
+  <a class="link mx-6" href="https://gohugo.io/" rel="noopener" target="_blank"
+    >powered by hugo️️</a
+  >️
+  <a
+    class="link"
+    href="https://github.com/nanxiaobei/hugo-paper"
+    rel="noopener"
+    target="_blank"
+    >hugo-paper</a
+  >
+</footer>
+
+  </body>
+</html>

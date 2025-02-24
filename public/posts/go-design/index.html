@@ -56,10 +56,55 @@
   
   
   
-  <meta name="description" content="数组 如果数组中元素的个数小于或者等于 4 个，那么所有的变量会直接在栈上初始化，如果数组元素大于 4 个，变量就会在静态存储区初始化然后拷贝到栈上。 为什么？
-slice []int []interface{} 切片提供了对数组中部分连续片段的引用，而作为数组的引用，我们可以在运行区间可以修改它的长度和范围。当切片底层的数组长度不足时就会触发扩容，切片指向的数组可能会发生变化，不过在上层看来切片是没有变化的，上层只需要与切片打交道不需要关心数组的变化。
-追加和扩容 先确定切片大致容量 如果期望容量大于当前容量的两倍就会使用期望容量； 如果当前切片的长度小于 1024 就会将容量翻倍； 如果当前切片的长度大于 1024 就会每次增加 25% 的容量，直到新容量大于期望容量； 再根据切片中的元素大小对齐内存 切片拷贝 无论是编译期间拷贝还是运行时拷贝，两种拷贝方式都会通过 runtime.memmove 将整块内存的内容拷贝到目标的内存区域中： 大切片扩容或者复制时可能会发生大规模的内存拷贝，要注意。
-map type hmap struct { count int flags uint8 B uint8 noverflow uint16 hash0 uint32 buckets unsafe.Pointer oldbuckets unsafe.Pointer nevacuate uintptr extra *mapextra } type mapextra struct { overflow *[]*bmap oldoverflow *[]*bmap nextOverflow *bmap } count 表示当前哈希表中的元素数量； B 表示当前哈希表持有的 buckets 数量，但是因为哈希表中桶的数量都 2 的倍数，所以该字段会存储对数，也就是 len(buckets) == 2^B； hash0 是哈希的种子，它能为哈希函数的结果引入随机性，这个值在创建哈希表时确定，并在调用哈希函数时作为参数传入； oldbuckets 是哈希在扩容时用于保存之前 buckets 的字段，它的大小是当前 buckets 的一半； 如上图所示哈希表 runtime." />
+  <meta name="description" content="数组
+如果数组中元素的个数小于或者等于 4 个，那么所有的变量会直接在栈上初始化，如果数组元素大于 4 个，变量就会在静态存储区初始化然后拷贝到栈上。 为什么？
+slice
+[]int
+[]interface{}
+
+切片提供了对数组中部分连续片段的引用，而作为数组的引用，我们可以在运行区间可以修改它的长度和范围。当切片底层的数组长度不足时就会触发扩容，切片指向的数组可能会发生变化，不过在上层看来切片是没有变化的，上层只需要与切片打交道不需要关心数组的变化。
+追加和扩容
+
+先确定切片大致容量
+
+如果期望容量大于当前容量的两倍就会使用期望容量；
+如果当前切片的长度小于 1024 就会将容量翻倍；
+如果当前切片的长度大于 1024 就会每次增加 25% 的容量，直到新容量大于期望容量；
+
+
+再根据切片中的元素大小对齐内存
+
+切片拷贝
+无论是编译期间拷贝还是运行时拷贝，两种拷贝方式都会通过 runtime.memmove 将整块内存的内容拷贝到目标的内存区域中：
+
+大切片扩容或者复制时可能会发生大规模的内存拷贝，要注意。
+map
+type hmap struct {
+	count     int
+	flags     uint8
+	B         uint8
+	noverflow uint16
+	hash0     uint32
+
+	buckets    unsafe.Pointer
+	oldbuckets unsafe.Pointer
+	nevacuate  uintptr
+
+	extra *mapextra
+}
+
+type mapextra struct {
+	overflow    *[]*bmap
+	oldoverflow *[]*bmap
+	nextOverflow *bmap
+}
+
+count 表示当前哈希表中的元素数量；
+B 表示当前哈希表持有的 buckets 数量，但是因为哈希表中桶的数量都 2 的倍数，所以该字段会存储对数，也就是 len(buckets) == 2^B；
+hash0 是哈希的种子，它能为哈希函数的结果引入随机性，这个值在创建哈希表时确定，并在调用哈希函数时作为参数传入；
+oldbuckets 是哈希在扩容时用于保存之前 buckets 的字段，它的大小是当前 buckets 的一半；
+
+" />
   <meta name="author" content="greathongtu 的 Blog" />
   
 
@@ -114,7 +159,7 @@ map type hmap struct { count int flags uint8 B uint8 noverflow uint16 hash0 uint
   />
 
   
-  <meta name="generator" content="Hugo 0.133.1">
+  <meta name="generator" content="Hugo 0.145.0">
 
   
   
@@ -285,8 +330,8 @@ map type hmap struct { count int flags uint8 B uint8 noverflow uint16 hash0 uint
 <p>如上图所示哈希表 runtime.hmap 的桶是 runtime.bmap。每一个 runtime.bmap 都能存储 8 个键值对，当哈希表中存储的数据过多，单个桶已经装满时就会使用 extra.nextOverflow 这个bmap 存储溢出的数据。</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">bmap</span> <span style="color:#66d9ef">struct</span> {
 </span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">topbits</span>  [<span style="color:#ae81ff">8</span>]<span style="color:#66d9ef">uint8</span>
-</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 以下字段在运行时也是通过计算内存地址的方式访问的
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">keys</span>     [<span style="color:#ae81ff">8</span>]<span style="color:#a6e22e">keytype</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#75715e">// 以下字段在运行时也是通过计算内存地址的方式访问的</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">keys</span>     [<span style="color:#ae81ff">8</span>]<span style="color:#a6e22e">keytype</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">values</span>   [<span style="color:#ae81ff">8</span>]<span style="color:#a6e22e">valuetype</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">pad</span>      <span style="color:#66d9ef">uintptr</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">overflow</span> <span style="color:#66d9ef">uintptr</span>
@@ -346,8 +391,8 @@ map type hmap struct { count int flags uint8 B uint8 noverflow uint16 hash0 uint
 <li>扩容期间写入/删除值：触发 runtime.growWork 增量拷贝哈希表中的内容：</li>
 </ul>
 <h2 id="string">string</h2>
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// 在运行时都会使用如下的 reflect.StringHeader 表示
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">StringHeader</span> <span style="color:#66d9ef">struct</span> {
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#75715e">// 在运行时都会使用如下的 reflect.StringHeader 表示</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">StringHeader</span> <span style="color:#66d9ef">struct</span> {
 </span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">Data</span> <span style="color:#66d9ef">uintptr</span>
 </span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">Len</span>  <span style="color:#66d9ef">int</span>
 </span></span><span style="display:flex;"><span>}
@@ -432,35 +477,35 @@ map type hmap struct { count int flags uint8 B uint8 noverflow uint16 hash0 uint
 </span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">Error</span>() <span style="color:#66d9ef">string</span>
 </span></span><span style="display:flex;"><span>}
 </span></span></code></pre></div><table>
-<thead>
-<tr>
-<th></th>
-<th>结构体实现接口</th>
-<th>结构体指针实现接口</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>结构体初始化变量</td>
-<td>通过</td>
-<td>不通过</td>
-</tr>
-<tr>
-<td>结构体指针初始化变量</td>
-<td>通过</td>
-<td>通过</td>
-</tr>
-</tbody>
+  <thead>
+      <tr>
+          <th></th>
+          <th>结构体实现接口</th>
+          <th>结构体指针实现接口</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td>结构体初始化变量</td>
+          <td>通过</td>
+          <td>不通过</td>
+      </tr>
+      <tr>
+          <td>结构体指针初始化变量</td>
+          <td>通过</td>
+          <td>通过</td>
+      </tr>
+  </tbody>
 </table>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Cat</span> <span style="color:#66d9ef">struct</span> {}
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">Duck</span> <span style="color:#66d9ef">interface</span> { <span style="color:#f92672">...</span> }
 </span></span><span style="display:flex;"><span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">c</span>  <span style="color:#a6e22e">Cat</span>) <span style="color:#a6e22e">Quack</span> {}  <span style="color:#75715e">// 使用结构体实现接口
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">c</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Cat</span>) <span style="color:#a6e22e">Quack</span> {}  <span style="color:#75715e">// 使用结构体指针实现接口
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>
-</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">d</span> <span style="color:#a6e22e">Duck</span> = <span style="color:#a6e22e">Cat</span>{}      <span style="color:#75715e">// 使用结构体初始化变量
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">d</span> <span style="color:#a6e22e">Duck</span> = <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">Cat</span>{}     <span style="color:#75715e">// 使用结构体指针初始化变量
-</span></span></span></code></pre></div><p>方法的接受者是结构体，而初始化的变量是结构体指针之所以可以：作为指针的 &amp;Cat{} 变量能够<strong>隐式地获取</strong>到指向的结构体</p>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">c</span>  <span style="color:#a6e22e">Cat</span>) <span style="color:#a6e22e">Quack</span> {}  <span style="color:#75715e">// 使用结构体实现接口</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> (<span style="color:#a6e22e">c</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">Cat</span>) <span style="color:#a6e22e">Quack</span> {}  <span style="color:#75715e">// 使用结构体指针实现接口</span>
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">d</span> <span style="color:#a6e22e">Duck</span> = <span style="color:#a6e22e">Cat</span>{}      <span style="color:#75715e">// 使用结构体初始化变量</span>
+</span></span><span style="display:flex;"><span><span style="color:#66d9ef">var</span> <span style="color:#a6e22e">d</span> <span style="color:#a6e22e">Duck</span> = <span style="color:#f92672">&amp;</span><span style="color:#a6e22e">Cat</span>{}     <span style="color:#75715e">// 使用结构体指针初始化变量</span>
+</span></span></code></pre></div><p>方法的接受者是结构体，而初始化的变量是结构体指针之所以可以：作为指针的 &amp;Cat{} 变量能够<strong>隐式地获取</strong>到指向的结构体</p>
 <p>Go 语言的接口类型不是任意类型</p>
 <div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#f92672">package</span> <span style="color:#a6e22e">main</span>
 </span></span><span style="display:flex;"><span>
@@ -472,21 +517,21 @@ map type hmap struct { count int flags uint8 B uint8 noverflow uint16 hash0 uint
 </span></span><span style="display:flex;"><span>
 </span></span><span style="display:flex;"><span><span style="color:#66d9ef">func</span> <span style="color:#a6e22e">main</span>() {
 </span></span><span style="display:flex;"><span>	<span style="color:#66d9ef">var</span> <span style="color:#a6e22e">s</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">TestStruct</span>
-</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">s</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">nil</span>)      <span style="color:#75715e">// #=&gt; true
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">NilOrNot</span>(<span style="color:#a6e22e">s</span>))   <span style="color:#75715e">// #=&gt; false
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>}
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">s</span> <span style="color:#f92672">==</span> <span style="color:#66d9ef">nil</span>)      <span style="color:#75715e">// #=&gt; true</span>
+</span></span><span style="display:flex;"><span>	<span style="color:#a6e22e">fmt</span>.<span style="color:#a6e22e">Println</span>(<span style="color:#a6e22e">NilOrNot</span>(<span style="color:#a6e22e">s</span>))   <span style="color:#75715e">// #=&gt; false</span>
+</span></span><span style="display:flex;"><span>}
 </span></span></code></pre></div><p>原因： 调用 NilOrNot 函数时发生了<strong>隐式类型转换</strong>，转换后的变量不仅包含转换前的变量，还包含变量的类型信息 TestStruct</p>
 <h3 id="数据结构">数据结构</h3>
 <ul>
 <li>不包含任何方法的 interface{} 类型 eface：只包含指向底层数据和类型的两个指针。所以 Go 语言的任意类型都可以转换成 interface{}
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">eface</span> <span style="color:#66d9ef">struct</span> { <span style="color:#75715e">// 16 字节
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">_type</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">_type</span>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">eface</span> <span style="color:#66d9ef">struct</span> { <span style="color:#75715e">// 16 字节</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">_type</span> <span style="color:#f92672">*</span><span style="color:#a6e22e">_type</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">data</span>  <span style="color:#a6e22e">unsafe</span>.<span style="color:#a6e22e">Pointer</span>
 </span></span><span style="display:flex;"><span>}
 </span></span></code></pre></div></li>
 <li>runtime.iface:
-<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">iface</span> <span style="color:#66d9ef">struct</span> { <span style="color:#75715e">// 16 字节
-</span></span></span><span style="display:flex;"><span><span style="color:#75715e"></span>    <span style="color:#a6e22e">tab</span>  <span style="color:#f92672">*</span><span style="color:#a6e22e">itab</span>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#66d9ef">type</span> <span style="color:#a6e22e">iface</span> <span style="color:#66d9ef">struct</span> { <span style="color:#75715e">// 16 字节</span>
+</span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">tab</span>  <span style="color:#f92672">*</span><span style="color:#a6e22e">itab</span>
 </span></span><span style="display:flex;"><span>    <span style="color:#a6e22e">data</span> <span style="color:#a6e22e">unsafe</span>.<span style="color:#a6e22e">Pointer</span>
 </span></span><span style="display:flex;"><span>}
 </span></span></code></pre></div></li>
@@ -564,7 +609,7 @@ map type hmap struct { count int flags uint8 B uint8 noverflow uint16 hash0 uint
 >
   <div class="mr-auto">
   
-    &copy; 2024
+    &copy; 2025
     <a class="link" href="http://localhost:1313/">greathongtu 的 Blog</a>
   
   </div>

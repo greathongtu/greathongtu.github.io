@@ -56,8 +56,46 @@
   
   
   
-  <meta name="description" content="Repeat using . and ; // use &#39; to revert ;, u to revert . var foo = &#34;method(&#34;&#43;argument1&#43;&#34;,&#34;&#43;argument2&#43;&#34;)&#34;; f&#43; to Move, s&lt;space&gt;&#43;&lt;space&gt;&lt;Esc&gt; to Change. use ; to repeat search and . to repeat change var foo = &#34;method(&#34; &#43; argument1 &#43; &#34;,&#34; &#43; argument2 &#43; &#34;)&#34;; Dot Formula The Ideal:
-one keystroke to Move, one keystroke to Execute. Act, Repeat, Reverse Operator &#43; Motion = Action (dw、guaw、gcap) Misc 如何在每行的最后加上分号？ 先A; 然后就可以重复j." />
+  <meta name="description" content="Repeat using . and ;
+// use &#39; to revert ;, u to revert .
+var foo = &#34;method(&#34;&#43;argument1&#43;&#34;,&#34;&#43;argument2&#43;&#34;)&#34;;
+
+f&#43; to Move, s&lt;space&gt;&#43;&lt;space&gt;&lt;Esc&gt; to Change.
+use ; to repeat search and . to repeat change
+
+var foo = &#34;method(&#34; &#43; argument1 &#43; &#34;,&#34; &#43; argument2 &#43; &#34;)&#34;;
+
+Dot Formula
+The Ideal:
+
+one keystroke to Move, one keystroke to Execute.
+Act, Repeat, Reverse
+Operator &#43; Motion = Action (dw、guaw、gcap)
+
+Misc
+
+如何在每行的最后加上分号？ 先A; 然后就可以重复j. j. j.
+查找：光标在单词上的时候输入*也可以
+查找并替换: cwxxx 然后重复 n. n. n.  也可以用 :%s/content/copy/g 命令
+更改大小写：g~、gu 和 gU
+w: word, s: sentence, p: paragraph, 一般来说，d{motion} 命令和 aw、as 和 ap 配合使用比较好，而 c{motion} 和 iw is ip一起用效果会更好
+:!ls exec shell command inside vim, % means current file
+
+
+modify column data: visual select then c, finally &lt;Esc&gt;
+非方形区域也行，如在行尾添加分号：选中block,go to end using $
+
+
+:w !sudo tee % &gt; /dev/null 以超级用户权限保存文件
+:%s/Practical/Pragmatic/ 每行内的第一个“Practical”替换为“Pragmatic”
+in visual mode: o: Goto other end of highlighted text.
+in visual mode: r-: change them all to &mdash;&ndash;
+in insert mode: &lt;C-o&gt;zz to get into insert normal mode.(move curr line to center and continue insert)
+18&lt;C-x&gt;: find the first number later in this line, -18 to it.
+in insert mode: &lt;C-w&gt; delete back one word. &lt;C-u&gt; delete back to start of line
+in insert mode: &lt;C-r&gt;=6*24&lt;CR&gt; insert the result
+R to replace mode
+" />
   <meta name="author" content="greathongtu 的 Blog" />
   
 
@@ -112,7 +150,7 @@ one keystroke to Move, one keystroke to Execute. Act, Repeat, Reverse Operator &
   />
 
   
-  <meta name="generator" content="Hugo 0.133.1">
+  <meta name="generator" content="Hugo 0.145.0">
 
   
   
@@ -329,7 +367,7 @@ one keystroke to Move, one keystroke to Execute. Act, Repeat, Reverse Operator &
 >
   <div class="mr-auto">
   
-    &copy; 2024
+    &copy; 2025
     <a class="link" href="http://localhost:1313/">greathongtu 的 Blog</a>
   
   </div>

@@ -56,11 +56,40 @@
   
   
   
-  <meta name="description" content="#include &lt;iostream&gt; #include &lt;thread&gt; void hello() { std::cout &lt;&lt; &#34;Hello Concurrent World\n&#34;; } int main() { std::cout &lt;&lt; &#34;first main&#34; &lt;&lt; std::endl; std::thread t(hello); std::cout &lt;&lt; &#34;from main thread!&#34; &lt;&lt; std::endl; // t.join(); t.detach(); } 等待：join
+  <meta name="description" content="#include &lt;iostream&gt;
+#include &lt;thread&gt;
+void hello() { std::cout &lt;&lt; &#34;Hello Concurrent World\n&#34;; }
+int main() {
+  std::cout &lt;&lt; &#34;first main&#34; &lt;&lt; std::endl;
+  std::thread t(hello);
+  std::cout &lt;&lt; &#34;from main thread!&#34; &lt;&lt; std::endl;
+  // t.join();
+  t.detach();
+}
+等待：join
 不等：detach 如后台监控线程
 精细化控制： condition variables and futures
 join之前发生exception怎么办呢：try catch. 更好的方式：RAII
-class thread_guard { std::thread &amp;t; public: explicit thread_guard(std::thread &amp;t_) : t(std::move(t_)) { if (!t.joinable()) { throw std::logic_error(“No thread”); } } ~thread_guard() { t.join(); } thread_guard(thread_guard const &amp;) = delete; thread_guard &amp;operator=(thread_guard const &amp;) = delete; }; // usage std::thread t(my_func); thread_guard g(t); 向thread对象传参的时候要注意隐式类型转换：" />
+class thread_guard {
+  std::thread &amp;t;
+
+public:
+  explicit thread_guard(std::thread &amp;t_) : t(std::move(t_)) {
+    if (!t.joinable()) {
+      throw std::logic_error(“No thread”);
+    }
+  }
+  ~thread_guard() {
+    t.join(); 
+  }
+  thread_guard(thread_guard const &amp;) = delete;
+  thread_guard &amp;operator=(thread_guard const &amp;) = delete;
+};
+
+// usage
+std::thread t(my_func);
+thread_guard g(t);
+向thread对象传参的时候要注意隐式类型转换：" />
   <meta name="author" content="greathongtu 的 Blog" />
   
 
@@ -115,7 +144,7 @@ class thread_guard { std::thread &amp;t; public: explicit thread_guard(std::thre
   />
 
   
-  <meta name="generator" content="Hugo 0.133.1">
+  <meta name="generator" content="Hugo 0.145.0">
 
   
   
@@ -638,7 +667,7 @@ members</p>
 >
   <div class="mr-auto">
   
-    &copy; 2024
+    &copy; 2025
     <a class="link" href="http://localhost:1313/">greathongtu 的 Blog</a>
   
   </div>

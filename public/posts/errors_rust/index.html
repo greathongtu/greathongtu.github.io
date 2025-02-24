@@ -57,12 +57,31 @@
   
   
   <meta name="description" content="从第一性原理推导Rust Error:
-One API error, three stakeholders: Users, Programmers, machines.
-model errors first step enum Falliable&lt;T&gt; { Ok(T), Err } second step improve error reporting capabilities
-enum Falliable&lt;T&gt; { Ok(T), Err(String), } third step provide different error messages to users and programmers
-enum Falliable&lt;T&gt; { Ok(T), Err { user_report: String, programmer_report: String, } } forth step provide a stable contract to enable control flow
-增加泛型参数Error
-enum Falliable&lt;T, Error&gt; { Ok(T), Err { user_report: String, programmer_report: String, error: Error, } } for example:" />
+One API error, three stakeholders:
+Users, Programmers, machines.
+model errors
+first step
+enum Falliable&lt;T&gt; {
+  Ok(T),
+  Err
+}
+second step
+improve error reporting capabilities
+enum Falliable&lt;T&gt; {
+  Ok(T),
+  Err(String),
+}
+third step
+provide different error messages to users and programmers
+enum Falliable&lt;T&gt; {
+  Ok(T),
+  Err {
+    user_report: String,
+    programmer_report: String,
+  }
+}
+forth step
+provide a stable contract to enable control flow" />
   <meta name="author" content="greathongtu 的 Blog" />
   
 
@@ -117,7 +136,7 @@ enum Falliable&lt;T, Error&gt; { Ok(T), Err { user_report: String, programmer_re
   />
 
   
-  <meta name="generator" content="Hugo 0.133.1">
+  <meta name="generator" content="Hugo 0.145.0">
 
   
   
@@ -379,7 +398,7 @@ derive Debug, impl Display and fn source().</p>
 >
   <div class="mr-auto">
   
-    &copy; 2024
+    &copy; 2025
     <a class="link" href="http://localhost:1313/">greathongtu 的 Blog</a>
   
   </div>

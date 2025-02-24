@@ -56,7 +56,396 @@
   
   
   
-  <meta name="description" content="use std::thread; fn main() { // pass a closure let numbers = vec![1, 2, 3]; thread::spawn(move || { for n in numbers { println!(&#34;{n}&#34;); } }).join().unwrap(); let t1 = thread::spawn(f); println!(&#34;Hello from the main thread.&#34;); t1.join().unwrap(); } fn f(){ println!(&#34;Hello from another thread!&#34;); let id = thread::current().id(); println!(&#34;This is my thread id: {id:?}&#34;); } // scoped thread // scoped threads can borrow non-static data, // as the scope guarantees all threads will be joined at the end use std::thread; fn main() { let numbers = vec!" />
+  <meta name="description" content="use std::thread; 
+fn main() {
+    // pass a closure
+    let numbers = vec![1, 2, 3]; 
+    thread::spawn(move || { 
+        for n in numbers { 
+            println!(&#34;{n}&#34;);
+        }
+    }).join().unwrap();
+    let t1 = thread::spawn(f); 
+    println!(&#34;Hello from the main thread.&#34;);
+    t1.join().unwrap();
+}
+fn f(){
+    println!(&#34;Hello from another thread!&#34;); 
+    let id = thread::current().id(); 
+    println!(&#34;This is my thread id: {id:?}&#34;);
+}
+
+
+// scoped thread
+// scoped threads can borrow non-static data,
+// as the scope guarantees all threads will be joined at the end
+use std::thread;
+fn main() {
+    let numbers = vec![1, 2, 3];
+
+    // argument s of the closure represents the scope. 
+    thread::scope(|s| {
+        s.spawn(|| {
+            println!(&#34;length: {}&#34;, numbers.len());
+        });
+        s.spawn(|| {
+            for n in &amp;numbers {
+                println!(&#34;{n}&#34;);
+            }
+        });
+    });
+}
+
+
+// interior mutability
+// Cell&lt;T&gt; and RefCell&lt;T&gt; types may be mutated through shared references
+// Both single threaded
+
+// Cell implements interior mutability by moving values in and out of the Cell&lt;T&gt;.
+// To avoid undefined behavior, it only allows you 
+// to copy the value out (if T is Copy),
+// or replace it with another value as a whole 
+use std::cell::Cell;
+
+fn f(v: &amp;Cell&lt;Vec&lt;i32&gt;&gt;) {
+    let mut v2 = v.take(); // Replaces the contents of the Cell with an empty Vec
+    v2.push(1);
+    v.set(v2); // Put the modified Vec back
+}
+
+fn main() {
+    let v = Cell::new(vec![1, 2, 3]);
+    f(&amp;v);
+    assert_eq!(v.into_inner(), vec![1, 2, 3, 1]);
+}
+
+
+// RefCell let you use references instead of values
+// allow you to borrow its contents 
+// If you try to borrow it while it is already mutably borrowed it will panic.
+fn f(v: &amp;RefCell&lt;Vec&lt;i32&gt;&gt;) {
+    v.borrow_mut().push(1); // We can modify the `Vec` directly.
+} 
+
+// When to choose interior mutability
+// 1. Introducing mutability &#39;inside&#39; of something immutable: Rc&lt;RefCell&lt;T&gt;&gt;
+// 2. Implementation details of logically-immutable methods.
+// 3. Mutating implementations of Clone
+
+
+// RwLock &amp; mutex: concurrent version of RefCell
+// unlike a RefCell, it does not panic.
+// Instead, it blocks the current thread — putting it to sleep when conflicting.
+// more complicated version of mutex. Instead of a single lock() method,
+// it has a read() and write() method for locking
+
+
+// Atomics: concurrent version of Cell
+// Unlike a Cell, they cannot be of arbitrary size.
+// no generic Atomic&lt;T&gt; type for any T
+// there are only specific atomic types such as AtomicU32 and AtomicPtr&lt;T&gt;.
+
+
+// UnsafeCell: primitive building block for interior mutability.
+// its get() method just gives a raw pointer to the value it wraps
+// Usually UnsafeCell is not used directly, but wrapped in Cell or Mutex
+
+
+// Send &amp; Sync
+// A type is Send if it can be sent to another thread.
+// A type is Sync if it can be shared with another thread aka: &amp;T is Send.
+// They are auto traits. To opt out, add a field like std::marker::PhantomData&lt;T&gt;.
+// PhantomData is treated as a T. not exist at runtime. zero-sized
+use std::marker::PhantomData;
+struct X {
+    handle: i32,
+    // Since Cell&lt;()&gt; is not Sync.
+    _not_sync: PhantomData&lt;Cell&lt;()&gt;&gt;,
+}
+// Raw pointers (*const T and *mut T) are neither Send nor Sync.
+// To opt in Send &amp; Sync, impl it urself
+
+
+// Mutex&lt;T&gt; does not have an unlock() method.
+// Instead lock() method returns MutexGuard.
+// MutexGuard behaves like an exclusive reference through the DerefMut trait.
+use std::sync::Mutex;
+use std::thread;
+
+fn main() {
+    let n = Mutex::new(0);
+    thread::scope(|s| {
+        for _ in 0..10 {
+            s.spawn(|| {
+                // MutexGuard. unwrap() relate to lock poisoning.
+                let mut guard = n.lock().unwrap();
+                for _ in 0..100 {
+                    // DerefMut trait
+                    *guard &#43;= 1;
+                }
+            });
+        }
+    });
+    // into_inner takes ownership of the mutex,
+    // nothing else have a reference to the mutex anymore
+    assert_eq!(n.into_inner().unwrap(), 1000);
+}
+
+
+// Lock Poisoning
+// A Mutex gets marked as poisoned when a thread panics while holding the lock.
+// When poisoned, the Mutex will no longer be locked,
+// calling lock() will result in an Err.
+
+
+// Lifetime of the MutexGuard:
+// Any temporaries produced within a larger expression,
+// like the guard returned by lock()
+// will be dropped at the end of the statement.
+list.lock().unwrap().push(1);
+
+// common pitfall regarding to this:
+// When using match, if let, or while let
+// the lock is hold until the end of the block
+if let Some(item) = list.lock().unwrap().front() {
+    process_item(item);
+}
+// This is OK
+if list.lock().unwrap().pop() == Some(1) {
+    do_something();
+}
+
+// This is OK
+let item = list.lock().unwrap().pop();
+if let Some(item) = item {
+    process_item(item);
+}
+
+
+// Waiting: Parking and Condition Variables
+// When data is mutated by multiple threads, there are many
+// situations where they would need to wait for some event,
+// for some condition about the data to become true.
+// For example, if we have a mutex protecting a Vec,
+// we might want to wait until it contains anything.
+// If a mutex was all we had, we’d have to keep locking the mutex to
+// repeatedly check if there’s anything in the Vec yet.
+use std::collections::VecDeque;
+use std::sync::Mutex;
+use std::thread;
+use std::time::Duration;
+
+fn main() {
+    let queue = Mutex::new(VecDeque::new());
+    thread::scope(|s| {
+        // Consuming thread
+        let t = s.spawn(|| loop {
+            let item = queue.lock().unwrap().pop_front();
+            // if not found, park itself
+            if let Some(item) = item {
+                dbg!(item);
+            } else {
+                thread::park();
+            }
+        });
+
+        // Producing thread
+        for i in 0.. {
+            queue.lock().unwrap().push_back(i);
+            // wake it up
+            t.thread().unpark();
+            thread::sleep(Duration::from_secs(1));
+        }
+    });
+}
+// An important observation: this program would
+// still be correct if we remove parking although inefficient.
+// spurious wake-ups
+// a call to unpark() before the thread parks itself does not get lost.
+// Otherwise starve
+// but unpark() requests don’t stack up
+
+
+// Why condition variables:
+// if we had multiple consumer threads taking items from the same queue,
+// we need Condition Variables
+use std::collections::VecDeque;
+use std::sync::Condvar;
+use std::sync::Mutex;
+use std::thread;
+use std::time::Duration;
+
+fn main() {
+    let queue = Mutex::new(VecDeque::new());
+    let not_empty = Condvar::new();
+
+    thread::scope(|s| {
+        s.spawn(|| {
+            loop {
+                let mut q = queue.lock().unwrap();
+                let item = loop {
+                    if let Some(item) = q.pop_front() {
+                        break item;
+                    } else {
+                        // atomically unlock the mutex and start waiting
+                        // wait() unlocks and sleep, when woken up,
+                        // it relocks the mutex and returns a new MutexGuard
+                        q = not_empty.wait(q).unwrap();
+                    }
+                };
+                drop(q);
+                dbg!(item);
+            }
+        });
+
+        for i in 0.. {
+            queue.lock().unwrap().push_back(i);
+            not_empty.notify_one();
+            thread::sleep(Duration::from_secs(1));
+        }
+    });
+}
+// Normally, a Condvar is only ever used together with a single Mutex
+// A downside of a Condvar is that it only works when used together with a Mutex.
+Atomic Operations
+// 探讨原子操作之前，需要看内存顺序 memory ordering，
+// 每个原子操作都有一个std::sync::atomic::Ordering参数
+// Relaxed：Still guarantees consistency on a single atomic variable,
+// but does not promise anything about the relative order of operations
+// between different variables.
+
+// So two threads might see operations on different variables
+// happen in a different order.
+
+// Atomic Load and Store Operations
+impl AtomicI32 {
+    pub fn load(&amp;self, ordering: Ordering) -&gt; i32;
+    // only takes shared reference
+    pub fn store(&amp;self, value: i32, ordering: Ordering);
+}
+
+
+// std::sync::Once and std::sync::OnceLock
+// A cell which can be written to only once
+
+pub struct OnceCell&lt;T&gt; { /* private fields */ }
+// thread-safe OnceCell, can be used in statics.
+// 用get_or_init获取值
+pub struct OnceLock&lt;T&gt;
+
+
+// Fetch-and-Modify Operations
+// could overflow compared to CAS
+// Example: Progress Reporting from Multiple Threads
+// https://github.com/m-ou-se/rust-atomics-and-locks/blob/main/examples/ch2-06-progress-reporting-multiple-threads.rs
+
+
+// example: Statistics
+// the three atomic variables are updated separately,
+// the Relaxed memory ordering gives no guarantees about the relative order of operations
+// https://github.com/m-ou-se/rust-atomics-and-locks/blob/main/examples/ch2-07-statistics.rs
+
+// example: ID Allocation. could overflow 
+// https://github.com/m-ou-se/rust-atomics-and-locks/blob/main/examples/ch2-08-id-allocation.rs
+
+
+// CAS signature
+impl AtomicI32 {
+    pub fn compare_exchange(
+        &amp;self,
+        expected: i32,
+        new: i32,
+        success_order: Ordering,
+        failure_order: Ordering 
+    ) -&gt; Result&lt;i32, i32&gt;;
+}
+
+//  CAS example usage
+use std::sync::atomic::AtomicU32;
+use std::sync::atomic::Ordering::Relaxed;
+
+fn increment(a: &amp;AtomicU32) {
+    let mut current = a.load(Relaxed);
+    loop {
+        let new = current &#43; 1;
+        match a.compare_exchange(current, new, Relaxed, Relaxed) {
+            Ok(_) =&gt; return,
+            Err(v) =&gt; current = v,
+        }
+    }
+}
+
+fn main() {
+    let a = AtomicU32::new(0);
+    increment(&amp;a);
+    increment(&amp;a);
+    assert_eq!(a.into_inner(), 2);
+}
+// compare_exchange_weak is more efficiently on some platforms.
+// Fetch-Update: for the compare-and-exchange loop pattern.
+
+// CAS 的应用场景：生成某种密钥，只要生成一次，之后的就不要再生成了，用已经有的
+use std::sync::atomic::AtomicU64;
+use std::sync::atomic::Ordering::Relaxed;
+
+fn get_key() -&gt; u64 {
+    static KEY: AtomicU64 = AtomicU64::new(0);
+    let key = KEY.load(Relaxed);
+    if key == 0 {
+        let new_key = generate_random_key();
+        match KEY.compare_exchange(0, new_key, Relaxed, Relaxed) {
+            Ok(_) =&gt; new_key,
+            Err(k) =&gt; k,
+        }
+    } else {
+        key
+    }
+}
+fn generate_random_key() -&gt; u64 {
+    123
+}
+
+
+
+// Memory Reordering
+Ordering::Relaxed 
+Ordering::{Release, Acquire, AcqRel} 
+Ordering::SeqCst 
+
+// ?????? output could be 0 20
+static X: AtomicI32 = AtomicI32::new(0);
+static Y: AtomicI32 = AtomicI32::new(0);
+
+fn a() {
+    X.store(10, Relaxed);
+    Y.store(20, Relaxed);
+}
+
+fn b() {
+    let y = Y.load(Relaxed);
+    let x = X.load(Relaxed);
+    println!(&#34;{x} {y}&#34;);
+}
+
+fn main() {
+    thread::scope(|s| {
+        s.spawn(a);
+        s.spawn(b);
+    });
+}
+
+
+
+// Spawning and Joining 
+// Spawning a thread creates a happens-before relationship
+// between what happened before the spawn() call, and the new thread.
+// Similarly, joining a thread creates a happens-before relationship 
+// between the joined thread and what happens after the join() call.
+// 也就是只有中间的部分能上下移动
+Relaxed Ordering
+While atomic operations using relaxed memory ordering do not provide any happens-before relationship, they do guarantee a total modification order of each individual atomic variable. This means that all modifications of the same atomic variable happen in an order that is the same from the perspective of every single thread.
+在不同的线程看来，对于同一个原子变量的不同修改是相同顺序的
+reference code: https://github.com/m-ou-se/rust-atomics-and-locks/blob/main/examples/ch3-04-total-modification-order-2.rs" />
   <meta name="author" content="greathongtu 的 Blog" />
   
 
@@ -111,7 +500,7 @@
   />
 
   
-  <meta name="generator" content="Hugo 0.133.1">
+  <meta name="generator" content="Hugo 0.145.0">
 
   
   
@@ -700,7 +1089,7 @@ almost never necessary</p>
 >
   <div class="mr-auto">
   
-    &copy; 2024
+    &copy; 2025
     <a class="link" href="http://localhost:1313/">greathongtu 的 Blog</a>
   
   </div>

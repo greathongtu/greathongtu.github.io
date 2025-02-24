@@ -56,9 +56,43 @@
   
   
   
-  <meta name="description" content="遍历可遍历对象(Iterator) The core of Iterator：
-trait Iterator { type Item; fn next(&amp;mut self) -&gt; Option&lt;Self::Item&gt;; } for 循环是迭代器的语法糖
-普通方式： for i in 1..10 { println!(&#34;{}&#34;, i); } 遍历数组： // 数组实现了 IntoIterator trait，隐式调用into_iter() method let arr = [1, 2, 3]; for i in arr { println!(&#34;{i}&#34;); } // enumerate let v = vec![100, 32, 57]; for (i, v) in v.iter().enumerate() { println!(&#34;{} is {}&#34;, i, v); } 链式方法调用 into_iter 会夺走所有权 iter 是借用 iter_mut 是可变借用 let v1: Vec&lt;i32&gt; = vec!" />
+  <meta name="description" content="遍历可遍历对象(Iterator)
+The core of Iterator：
+trait Iterator {
+    type Item;
+    fn next(&amp;mut self) -&gt; Option&lt;Self::Item&gt;;
+}
+for 循环是迭代器的语法糖
+普通方式：
+for i in 1..10 {
+	println!(&#34;{}&#34;, i);
+}
+遍历数组：
+// 数组实现了 IntoIterator trait，隐式调用into_iter() method
+let arr = [1, 2, 3];
+for i in arr {
+    println!(&#34;{i}&#34;);
+}
+
+// enumerate
+let v = vec![100, 32, 57];
+for (i, v) in v.iter().enumerate() {
+    println!(&#34;{} is {}&#34;, i, v);
+}
+链式方法调用
+
+into_iter 会夺走所有权
+iter 是借用
+iter_mut 是可变借用
+
+let v1: Vec&lt;i32&gt; = vec![1, 2, 3];
+// map 是迭代器适配器，collect和sum是消费性适配器
+let v2: Vec&lt;_&gt; = v1.iter().map(|x| x &#43; 1).collect();
+对 HashMap 的操作
+
+更新：*m.entry(key).or_insert(0) &#43;= 1;
+读取：*m.get(&amp;key).unwrap()
+" />
   <meta name="author" content="greathongtu 的 Blog" />
   
 
@@ -113,7 +147,7 @@ trait Iterator { type Item; fn next(&amp;mut self) -&gt; Option&lt;Self::Item&gt
   />
 
   
-  <meta name="generator" content="Hugo 0.133.1">
+  <meta name="generator" content="Hugo 0.145.0">
 
   
   
@@ -315,7 +349,7 @@ trait Iterator { type Item; fn next(&amp;mut self) -&gt; Option&lt;Self::Item&gt
 >
   <div class="mr-auto">
   
-    &copy; 2024
+    &copy; 2025
     <a class="link" href="http://localhost:1313/">greathongtu 的 Blog</a>
   
   </div>
